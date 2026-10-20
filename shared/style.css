@@ -153,6 +153,15 @@ dialog::backdrop { background: rgba(10, 8, 5, .55); }
 fieldset { border: 0; }
 legend { font-size: .78rem; font-weight: 700; color: var(--mute); margin-bottom: 4px; }
 .newloc { border: 1px dashed var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.locsearch { display: flex; flex-direction: column; gap: 6px; }
+.locsearch .row-btns { flex-wrap: nowrap; }
+.locsearch input { flex: 1; min-width: 0; }
+.locresults { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; max-height: 240px; overflow-y: auto; }
+.locresults li + li { border-top: 1px solid var(--line); }
+.locresults li.note { padding: 10px; margin: 0; }
+.locresults button { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; padding: 9px 10px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.locresults button:hover, .locresults button:focus-visible { background: var(--p1-soft); }
+.locresults small { color: var(--muted, var(--text)); opacity: .75; font-size: .8rem; line-height: 1.3; }
 #pickMap { height: 220px; border-radius: 10px; border: 1px solid var(--line); }
 .row-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .dlg-foot { display: flex; justify-content: space-between; gap: 10px; margin-top: 6px; }
