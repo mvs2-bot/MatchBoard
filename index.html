@@ -29,8 +29,9 @@
             <div class="me-wrap">
                 <button id="meBtn" class="icon-btn me-btn" type="button" aria-label="Mein Konto" aria-haspopup="menu" aria-expanded="false" aria-controls="meMenu" hidden>👤</button>
                 <div id="meMenu" class="me-menu" role="menu" hidden>
-                    <div class="me-head"><span id="menuAva" class="ava"></span><div><b id="menuName"></b><small id="menuRole"></small></div></div>
-                    <a id="menuKonto" class="me-item" href="/konto.html?from=matchboard" role="menuitem">⚙️ Kontoeinstellungen</a>
+                    <div class="me-head"><span id="menuAva" class="ava"></span><div><b id="menuName"></b></div></div>
+                    <a id="menuKonto" class="me-item" href="/konto.html?from=matchboard#app-matchboard" role="menuitem">⚙️ Kontoeinstellungen</a>
+                    <a id="menuAdmin" class="me-item" href="/admin.html?from=matchboard#app-matchboard" role="menuitem" hidden>🛡️ Admin-Einstellungen</a>
                     <button id="logoutBtn" class="me-item danger" type="button" role="menuitem">🚪 Abmelden</button>
                 </div>
             </div>
@@ -504,7 +505,7 @@
         if (!D) { setLoggedInOff(); return; }
         D.matches.sort((a, b) => byTime(b, a));
         $('menuName').textContent = D.me.display_name || D.me.email;
-        $('menuRole').textContent = D.me.role === 'admin' ? 'Admin' : 'Mitglied';
+        show($('menuAdmin'), D.me.role === 'admin');   /* wie im Quest Log: Admin-Einstellungen nur für Admins */
         $('headSub').textContent = D.players.map(p => p.display_name).join(' vs. ') || 'Stefan vs. Ines';
         setLoggedIn(true);
         renderAll();
@@ -536,7 +537,7 @@
         paintAvatars();
     }
     function setLoggedInOff() {
-        show($('mainNav'), false); show($('addBtn'), false); show($('meBtn'), false); show($('offlineHint'), false); show($('headSub'), false);
+        show($('mainNav'), false); show($('addBtn'), false); show($('meBtn'), false); show($('menuAdmin'), false); show($('offlineHint'), false); show($('headSub'), false);
         $('meBtn').classList.remove('has-photo'); $('meBtn').innerHTML = '👤';
         onlyView('viewLoggedOut');
     }
