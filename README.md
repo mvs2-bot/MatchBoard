@@ -4,7 +4,7 @@
 
 Wie bei Quest Log und TravelBase ist die Seite nur eine „leere Hülle“: Alle Matches liegen im gemeinsamen
 Supabase-Core-Projekt (Tabellen `matchboard_*`) und werden erst nach dem Login geladen.
-Ohne Login gibt es einen **Demo-Modus** mit den zwölf Matches vom Sommer 2026 (nur im Browser, speichert nichts).
+Ohne Anmeldung zeigt die Seite nur das Login-Formular.
 
 ## Aufbau
 
@@ -12,12 +12,14 @@ Ohne Login gibt es einen **Demo-Modus** mit den zwölf Matches vom Sommer 2026 (
 index.html               Login, Dashboard (Punktestand, Statistiken, Karte), Log mit Filtern, Dialog „＋ Match“
 shared/style.css         Aussehen (gleiche Variablen und Bausteine wie Quest Log, Hell/Dunkel)
 shared/config.js         Supabase-URL + Publishable Key (dürfen öffentlich sein)
-shared/matchboard.js     Login, Daten laden/speichern, Offline-Zwischenspeicher, Demo-Daten
+shared/matchboard.js     Login, Daten laden/speichern, Offline-Zwischenspeicher, Profilbilder
 supabase/migrations/     Schema, RLS und Seed (gehört später ins Repo supabase-core)
 ```
 
 ## Funktionen
 
+- **Profilbilder**: das eigene oben rechts im Kontomenü, beide Spieler im Punktestand (sonst Initialen).
+  Bild und Name pflegt man in den gemeinsamen Kontoeinstellungen (`/konto.html`), sie gelten für alle Apps.
 - **Dashboard**: Punktestand mit Siegquote, Führung, aktuelle und längste Siegesserie, Anzahl Spiele, Orte und Spieltage,
   Aufteilung nach Kategorie und nach Spiel, die letzten fünf Matches.
 - **Karte** (Leaflet + Esri World Street Map): ein Punkt pro Ort, Zahl = Matches dort, Farbe = wer am Ort führt.
@@ -53,8 +55,10 @@ Zugang über `overall_app_access` (App `matchboard`), wie bei den anderen Apps:
 1. `supabase/migrations/20261020090000_matchboard_core.sql` im SQL Editor des Core-Projekts ausführen
    (oder als Migration in `supabase-core` übernehmen). Das Skript legt die App an, gibt Stefan und Ines Zugang,
    erstellt Tabellen und Regeln und spielt die zwölf Matches ein, solange die Tabelle noch leer ist. Es ist wiederholbar.
-2. GitHub Pages für dieses Repo einschalten (Branch `main`, Ordner `/`).
-3. Optional unter Authentication → URL Configuration `https://mvs2-bot.github.io/MatchBoard/` als Redirect URL eintragen.
+2. `supabase/migrations/20261020100000_matchboard_avatars.sql` ausführen, damit Stefan und Ines gegenseitig ihre
+   Profilbilder sehen (das eigene Bild ist auch ohne diese Migration sichtbar).
+3. GitHub Pages für dieses Repo einschalten (Branch `main`, Ordner `/`).
+4. Optional unter Authentication → URL Configuration `https://mvs2-bot.github.io/MatchBoard/` als Redirect URL eintragen.
 
 ## Wichtig
 

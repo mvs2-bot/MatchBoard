@@ -1,4 +1,4 @@
-/* MatchBoard – Login, Datenzugriff, Offline-Zwischenspeicher und Demo-Modus
+/* MatchBoard – Login, Datenzugriff, Offline-Zwischenspeicher und Profilbilder
    Benötigt vorher: supabase-js (CDN) und shared/config.js
    Alle Daten liegen in Supabase (Tabellen matchboard_*), Zugang über overall_app_access (App "matchboard"). */
 (function () {
@@ -23,46 +23,6 @@
     const pad = n => String(n).padStart(2, '0');
     const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
 
-    /* ───────── Demo-Modus: die 12 Matches vom Sommer 2026, nur im Browser ───────── */
-    let demo = null;
-    function demoData() {
-        const players = [
-            { id: 'demo-stefan', display_name: 'Stefan', avatar_path: null, role: 'admin' },
-            { id: 'demo-ines', display_name: 'Ines', avatar_path: null, role: 'member' }
-        ];
-        const categories = [
-            ['sport', 'Sport', '⚽', '#16a34a', 10], ['geschick', 'Geschicklichkeit', '🎯', '#ea580c', 20],
-            ['karten', 'Kartenspiele', '🃏', '#dc2626', 30], ['wuerfel', 'Würfelspiele', '🎲', '#7c3aed', 40],
-            ['brett', 'Gesellschafts- & Brettspiele', '♟️', '#0891b2', 50], ['quiz', 'Quiz & Wissen', '🧠', '#db2777', 60],
-            ['video', 'Videospiele', '🎮', '#2563eb', 70], ['sonstiges', 'Sonstiges', '✨', '#64748b', 99]
-        ].map(([id, label, emoji, color, sort]) => ({ id, label, emoji, color, sort }));
-        const locations = [
-            ['l1', 'Bregenz', 'Vorarlberg, AT', 47.5031, 9.7471], ['l2', 'Strandbad Bruggerhorn', 'St. Margrethen, CH', 47.4505, 9.6580],
-            ['l3', 'Camping Werdenberg', 'Buchs SG, CH', 47.1659, 9.4651], ['l4', 'Frutigresort', 'Frutigen, CH', 46.5870, 7.6440],
-            ['l5', 'Blüemlisalphütte', 'Kandersteg, CH', 46.4950, 7.7630], ['l6', 'Zürich', 'Zürich, CH', 47.3769, 8.5417],
-            ['l7', 'Reschensee', 'Vinschgau, IT', 46.8100, 10.5300]
-        ].map(([id, name, region, lat, lng]) => ({ id, name, region, lat, lng }));
-        const S = 'demo-stefan', I = 'demo-ines';
-        const matches = [
-            ['Mülleimer werfen', 'Mülleimer werfen', 'geschick', '2026-07-18', 'l1', I],
-            ['Kickern', 'Kickern', 'sport', '2026-07-18', 'l2', S],
-            ['Kniffel', 'Kniffel', 'wuerfel', '2026-07-18', 'l2', S],
-            ['Minigolf', 'Minigolf', 'sport', '2026-07-19', 'l3', S],
-            ['Fippern', 'Flippern', 'geschick', '2026-07-19', 'l3', S],
-            ['Minigolf', 'Minigolf', 'sport', '2026-07-20', 'l4', I],
-            ['Kniffeln Hütte', 'Kniffel', 'wuerfel', '2026-07-21', 'l5', I],
-            ['Kickern Mohamed', 'Kickern', 'sport', '2026-07-24', 'l6', S, ['Mohamed'], 'Match mit Mohamed'],
-            ['Minigolf Zürich', 'Minigolf', 'sport', '2026-07-24', 'l6', I],
-            ['Kickern Italien', 'Kickern', 'sport', '2026-07-25', 'l7', S],
-            ['Kniffel Italien', 'Kniffel', 'wuerfel', '2026-07-25', 'l7', I],
-            ['Bogenschießen', 'Bogenschießen', 'sport', '2026-07-25', 'l7', S]
-        ].map(([title, game, category_id, played_on, location_id, winner_id, guests, notes], i) => ({
-            id: 'm' + (i + 1), title, game, category_id, played_on, location_id, outcome: 'win', winner_id,
-            score: null, guests: guests || [], notes: notes || null, created_by: winner_id, created_at: played_on + 'T12:00:' + pad(i) + 'Z'
-        }));
-        return { players, categories, locations, matches, me: { id: S, email: 'demo', role: 'admin' }, demo: true, offline: false };
-    }
-
     async function getSession() {
         if (!sb) return null;
         try { return (await sb.auth.getSession()).data.session; } catch (e) { return null; }
@@ -71,9 +31,8 @@
     const MATCH = 'id, title, game, category_id, played_on, location_id, outcome, winner_id, score, guests, notes, created_by, created_at, updated_at';
     const NO_ACCESS = 'Dein Konto hat noch keinen Zugang zum MatchBoard.';
 
-    /* Kompletter Stand: { players, categories, locations, matches, me: { id, email, role }, offline, demo } */
+    /* Kompletter Stand: { players, categories, locations, matches, me: { id, email, role }, offline } */
     async function loadAll() {
-        if (demo) return demo;
         const session = await getSession();
         if (!session) return null;
         const key = 'all_' + session.user.id;
@@ -86,12 +45,14 @@
                 sb.from('matchboard_locations').select('id, name, region, lat, lng').order('name').then(check),
                 sb.from('matchboard_matches').select(MATCH).order('played_on', { ascending: false }).order('created_at', { ascending: false }).then(check)
             ]);
-            const all = { players, categories, locations, matches, me: { id: session.user.id, email: session.user.email, role } };
+            const own = check(await sb.from('overall_profiles').select('display_name, avatar_path').eq('id', session.user.id).maybeSingle()) || {};
+            const all = { players, categories, locations, matches,
+                me: { id: session.user.id, email: session.user.email, role, display_name: own.display_name, avatar_path: own.avatar_path } };
             cacheSet(key, all);
-            return { ...all, offline: false, demo: false };
+            return { ...all, offline: false };
         } catch (e) {
             const cached = cacheGet(key);
-            if (cached && isNetErr(e)) return { ...cached, offline: true, demo: false };
+            if (cached && isNetErr(e)) return { ...cached, offline: true };
             throw e;
         }
     }
@@ -103,12 +64,6 @@
             outcome: m.winner_id ? 'win' : 'draw', winner_id: m.winner_id || null, score: m.score || null,
             guests: m.guests || [], notes: m.notes || null
         };
-        if (demo) {
-            if (m.id) { const i = demo.matches.findIndex(x => x.id === m.id); demo.matches[i] = { ...demo.matches[i], ...row }; return demo.matches[i]; }
-            const saved = { ...row, id: 'm' + Date.now(), created_by: demo.me.id, created_at: new Date().toISOString() };
-            demo.matches.unshift(saved);
-            return saved;
-        }
         needSb();
         const q = m.id ? sb.from('matchboard_matches').update(row).eq('id', m.id) : sb.from('matchboard_matches').insert(row);
         const rows = check(await q.select(MATCH));
@@ -117,7 +72,6 @@
     }
 
     async function deleteMatch(id) {
-        if (demo) { demo.matches = demo.matches.filter(x => x.id !== id); return; }
         needSb();
         const rows = check(await sb.from('matchboard_matches').delete().eq('id', id).select('id'));
         if (!rows || !rows.length) throw new Error('Löschen dürfen nur Stefan oder wer das Match eingetragen hat.');
@@ -126,7 +80,6 @@
     /* Neuen Ort anlegen: { name, region, lat, lng } → Zeile mit id */
     async function addLocation(l) {
         const row = { name: l.name.trim(), region: (l.region || '').trim() || null, lat: +l.lat, lng: +l.lng };
-        if (demo) { const saved = { ...row, id: 'l' + Date.now() }; demo.locations.push(saved); return saved; }
         needSb();
         return check(await sb.from('matchboard_locations').insert(row).select('id, name, region, lat, lng').single());
     }
@@ -140,7 +93,6 @@
     /* Abmelden nur auf diesem Gerät; ist die Sitzung schon anderswo beendet, räumen wir sie selbst weg */
     async function signOut() {
         clearCache();
-        if (demo) { demo = null; return; }
         if (!sb) return;
         try {
             const { error } = await sb.auth.signOut({ scope: 'local' });
@@ -164,6 +116,22 @@
         if (error) throw error;
     }
 
+    /* Profilbilder liegen global im privaten Bucket "avatars" (Pfad in overall_profiles.avatar_path, ein Bild für alle Apps).
+       Angezeigt werden sie über kurzlebige signierte Links; wer welches Bild sehen darf, prüft Supabase:
+       das eigene immer, das des Mitspielers über die Policy matchboard_avatars_select. */
+    const signed = {};   /* Pfad → { url, until } */
+    async function avatarUrls(paths) {
+        paths = [...new Set(paths.filter(Boolean))];
+        const now = Date.now(), missing = paths.filter(p => !signed[p] || signed[p].until < now);
+        if (sb && missing.length) {
+            try {
+                const rows = check(await sb.storage.from('avatars').createSignedUrls(missing, 3600));
+                rows.forEach(r => { if (r.signedUrl && !r.error) signed[r.path] = { url: r.signedUrl, until: now + 50 * 60 * 1000 }; });
+            } catch (e) { /* offline oder keine Berechtigung → Initialen */ }
+        }
+        return Object.fromEntries(paths.filter(p => signed[p]).map(p => [p, signed[p].url]));
+    }
+
     /* Deutsche Fehlermeldungen für die häufigsten Fälle */
     function errorText(e) {
         const m = String(e && (e.message || e));
@@ -180,8 +148,6 @@
     }
 
     window.MB = { sb, configured, today, getSession, loadAll, saveMatch, deleteMatch, addLocation, signIn, signOut,
-        resetPassword, updatePassword, errorText, clearCache,
-        startDemo: () => { demo = demoData(); return demo; },
-        isDemo: () => !!demo,
+        resetPassword, updatePassword, errorText, clearCache, avatarUrls,
         onAuth: cb => sb && sb.auth.onAuthStateChange((ev, session) => cb(ev, session)) };
 })();

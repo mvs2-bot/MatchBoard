@@ -22,14 +22,14 @@
     <header class="sticky-header">
         <div>
             <h1>🏆 MatchBoard</h1>
-            <div class="sub" id="headSub">Stefan vs. Ines</div>
+            <div class="sub" id="headSub" hidden></div>
         </div>
         <div class="header-actions">
             <button id="themeToggle" class="icon-btn" type="button" aria-label="Zum dunklen Modus wechseln">🌙</button>
             <div class="me-wrap">
-                <button id="meBtn" class="icon-btn" type="button" aria-label="Mein Konto" aria-haspopup="menu" aria-expanded="false" aria-controls="meMenu" hidden>👤</button>
+                <button id="meBtn" class="icon-btn me-btn" type="button" aria-label="Mein Konto" aria-haspopup="menu" aria-expanded="false" aria-controls="meMenu" hidden>👤</button>
                 <div id="meMenu" class="me-menu" role="menu" hidden>
-                    <div class="me-head"><b id="menuName"></b><small id="menuRole"></small></div>
+                    <div class="me-head"><span id="menuAva" class="ava"></span><div><b id="menuName"></b><small id="menuRole"></small></div></div>
                     <a id="menuKonto" class="me-item" href="/konto.html?from=matchboard" role="menuitem">⚙️ Kontoeinstellungen</a>
                     <button id="logoutBtn" class="me-item danger" type="button" role="menuitem">🚪 Abmelden</button>
                 </div>
@@ -39,41 +39,29 @@
 
     <div id="setupHint" class="banner" hidden>⚙️ Supabase ist noch nicht verbunden: Bitte in <b>shared/config.js</b> die Project URL und den Publishable Key eintragen.</div>
     <div id="offlineHint" class="banner" hidden>📴 Offline – du siehst den zuletzt geladenen Stand.</div>
-    <div id="demoHint" class="banner" hidden>👀 Demo-Modus mit den Matches vom Sommer 2026. Änderungen bleiben nur in diesem Tab. <button class="link-btn" type="button" id="demoExit">Demo beenden</button></div>
 
     <nav class="tabs" id="mainNav" aria-label="Bereiche" hidden>
         <a href="#dashboard" data-tab="dashboard">🏠 Dashboard</a>
         <a href="#log" data-tab="log">📜 Log</a>
     </nav>
 
-    <!-- Nicht angemeldet -->
+    <!-- Nicht angemeldet: nur die Anmeldung, keine Inhalte -->
     <section id="viewLoggedOut" hidden>
-        <div class="hero">
-            <div class="tag">Wer gewinnt öfter? Jedes Match zählt.</div>
-            <p>Kickern, Kniffel, Minigolf oder Mülleimer werfen: Hier tragen Stefan und Ines ihre Mini-Competitions ein, mit Ort, Datum und Gewinner.</p>
-        </div>
-        <div class="grid2">
-            <div class="box">
-                <h2>🔑 Anmelden</h2>
-                <p class="note">Gleiches Konto wie bei Quest Log und TravelBase.</p>
-                <form id="loginForm">
-                    <label>E-Mail<input type="email" id="loginEmail" autocomplete="username" required></label>
-                    <label>Passwort<input type="password" id="loginPassword" autocomplete="current-password" required></label>
-                    <button class="btn" type="submit" id="loginBtn">Anmelden</button>
-                    <button class="link-btn" type="button" id="showReset">Passwort vergessen?</button>
-                </form>
-                <form id="resetForm" hidden>
-                    <label>E-Mail für den Link zum Zurücksetzen<input type="email" id="resetEmail" autocomplete="username" required></label>
-                    <button class="btn" type="submit">Link senden</button>
-                    <button class="link-btn" type="button" id="hideReset">← Zurück zur Anmeldung</button>
-                </form>
-                <div id="loginMsg" class="msg" hidden></div>
-            </div>
-            <div class="box">
-                <h2>👀 Erst mal reinschauen?</h2>
-                <p class="note">Die Demo zeigt Dashboard, Karte und Log mit den zwölf Matches vom Sommer 2026, ohne Login und ohne etwas zu speichern.</p>
-                <button class="btn-ghost" type="button" id="demoBtn">Demo ansehen</button>
-            </div>
+        <div class="box login-box">
+            <h2>🔑 Anmelden</h2>
+            <p class="note">Gleiches Konto wie bei Quest Log und TravelBase.</p>
+            <form id="loginForm">
+                <label>E-Mail<input type="email" id="loginEmail" autocomplete="username" required></label>
+                <label>Passwort<input type="password" id="loginPassword" autocomplete="current-password" required></label>
+                <button class="btn" type="submit" id="loginBtn">Anmelden</button>
+                <button class="link-btn" type="button" id="showReset">Passwort vergessen?</button>
+            </form>
+            <form id="resetForm" hidden>
+                <label>E-Mail für den Link zum Zurücksetzen<input type="email" id="resetEmail" autocomplete="username" required></label>
+                <button class="btn" type="submit">Link senden</button>
+                <button class="link-btn" type="button" id="hideReset">← Zurück zur Anmeldung</button>
+            </form>
+            <div id="loginMsg" class="msg" hidden></div>
         </div>
     </section>
 
@@ -188,7 +176,7 @@
     const fmtDate = (d, opts = { day: '2-digit', month: '2-digit', year: 'numeric' }) => new Date(d + 'T12:00:00').toLocaleDateString('de-DE', opts);
     function msg(el, text, ok) { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); show(el, !!text); }
 
-    let D = null;          /* { players, categories, locations, matches, me, offline, demo } */
+    let D = null;          /* { players, categories, locations, matches, me, offline } */
     let map = null, pickMap = null, pickMarker = null, pickPos = null, editing = null;
 
     /* ───────── Hell/Dunkel ───────── */
@@ -226,9 +214,9 @@
         const P = D.players, t = tally(D.matches);
         const pct = x => t.n ? Math.round(100 * x / t.n) : 0;
         $('score').innerHTML = `
-            <div class="side p0"><b>${t.w[0] || 0}</b><span>${esc(P[0] && P[0].display_name)}</span><small>${pct(t.w[0] || 0)} % Siegquote</small></div>
+            <div class="side p0">${P[0] ? `<span class="ava ava-lg" data-ava="${esc(P[0].id)}"></span>` : ''}<b>${t.w[0] || 0}</b><span>${esc(P[0] && P[0].display_name)}</span><small>${pct(t.w[0] || 0)} % Siegquote</small></div>
             <div class="mid"><b>:</b>${t.draw} × 🤝</div>
-            <div class="side p1"><b>${t.w[1] || 0}</b><span>${esc(P[1] && P[1].display_name)}</span><small>${pct(t.w[1] || 0)} % Siegquote</small></div>`;
+            <div class="side p1">${P[1] ? `<span class="ava ava-lg" data-ava="${esc(P[1].id)}"></span>` : ''}<b>${t.w[1] || 0}</b><span>${esc(P[1] && P[1].display_name)}</span><small>${pct(t.w[1] || 0)} % Siegquote</small></div>`;
         $('rateBar').innerHTML = t.n ? `<div class="r0" style="width:${100 * (t.w[0] || 0) / t.n}%"></div><div class="rd" style="width:${100 * t.draw / t.n}%"></div><div class="r1" style="width:${100 * (t.w[1] || 0) / t.n}%"></div>` : '';
         const diff = (t.w[0] || 0) - (t.w[1] || 0);
         $('leader').innerHTML = !t.n ? 'Noch keine Matches – leg los mit „＋ Match“.'
@@ -279,6 +267,7 @@
 
         $('recent').innerHTML = D.matches.slice(0, 5).map(entryHtml).join('') || '<div class="empty">Noch keine Matches.</div>';
         renderMap();
+        paintAvatars();
     }
 
     /* ───────── Karte (Esri Street, wie bei TravelBase) ───────── */
@@ -453,7 +442,7 @@
                 if (!$('lName').value.trim()) throw new Error('Bitte einen Namen für den neuen Ort eingeben.');
                 if (!pickPos) throw new Error('Bitte den neuen Ort auf der Karte setzen.');
                 const l = await MB.addLocation({ name: $('lName').value, region: $('lRegion').value, ...pickPos });
-                if (!D.demo) D.locations.push(l);
+                D.locations.push(l);
                 location_id = l.id;
             }
             const winner = document.querySelector('#mWinner input:checked');
@@ -463,9 +452,7 @@
                 played_on: $('mDate').value, location_id, winner_id: winner.value || null, score: $('mScore').value.trim(),
                 guests: $('mGuests').value.split(',').map(s => s.trim()).filter(Boolean), notes: $('mNotes').value.trim()
             });
-            if (!D.demo) {
-                D.matches = D.matches.filter(m => m.id !== saved.id).concat(saved).sort((a, b) => byTime(b, a));
-            } else D.matches.sort((a, b) => byTime(b, a));
+            D.matches = D.matches.filter(m => m.id !== saved.id).concat(saved).sort((a, b) => byTime(b, a));
             $('matchDlg').close();
             renderAll();
         } catch (err) {
@@ -476,7 +463,7 @@
         if (!editing || !confirm(`„${editing.title}“ wirklich löschen?`)) return;
         try {
             await MB.deleteMatch(editing.id);
-            if (!D.demo) D.matches = D.matches.filter(m => m.id !== editing.id);
+            D.matches = D.matches.filter(m => m.id !== editing.id);
             $('matchDlg').close();
             renderAll();
         } catch (err) { msg($('matchMsg'), MB.errorText(err)); }
@@ -499,7 +486,7 @@
 
     function setLoggedIn(on) {
         show($('mainNav'), on); show($('addBtn'), on && !D.offline); show($('meBtn'), on);
-        show($('demoHint'), on && D.demo); show($('offlineHint'), on && D.offline);
+        show($('offlineHint'), on && D.offline); show($('headSub'), on);
     }
 
     async function boot() {
@@ -516,15 +503,41 @@
         }
         if (!D) { setLoggedInOff(); return; }
         D.matches.sort((a, b) => byTime(b, a));
-        const me = player(D.me.id);
-        $('menuName').textContent = me ? me.display_name : D.me.email;
-        $('menuRole').textContent = D.demo ? 'Demo' : D.me.role === 'admin' ? 'Admin' : 'Mitglied';
+        $('menuName').textContent = D.me.display_name || D.me.email;
+        $('menuRole').textContent = D.me.role === 'admin' ? 'Admin' : 'Mitglied';
         $('headSub').textContent = D.players.map(p => p.display_name).join(' vs. ') || 'Stefan vs. Ines';
         setLoggedIn(true);
         renderAll();
+        loadAvatars();
+    }
+
+    /* ───────── Profilbilder (eigenes im Kopf, beide im Punktestand; sonst Initialen) ───────── */
+    let photos = {};   /* avatar_path → signierter Link */
+    const initials = n => (n || '?').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    function avaHtml(name, path, color) {
+        const url = path && photos[path];
+        return url ? `<img src="${esc(url)}" alt="">` : `<span class="ini" style="background:${color || 'var(--p1)'}">${esc(initials(name))}</span>`;
+    }
+    function paintAvatars() {
+        if (!D) return;
+        const myUrl = D.me.avatar_path && photos[D.me.avatar_path];
+        $('meBtn').classList.toggle('has-photo', !!myUrl);
+        $('meBtn').innerHTML = myUrl ? `<img src="${esc(myUrl)}" alt="">` : '👤';
+        $('menuAva').innerHTML = avaHtml(D.me.display_name || D.me.email, D.me.avatar_path);
+        document.querySelectorAll('[data-ava]').forEach(el => {
+            const p = player(el.dataset.ava), i = pIdx(el.dataset.ava);
+            el.innerHTML = avaHtml(p && p.display_name, p && p.avatar_path, `var(--${i ? 'ines' : 'stefan'})`);
+        });
+    }
+    async function loadAvatars() {
+        paintAvatars();
+        if (!D || D.offline) return;
+        photos = await MB.avatarUrls([D.me.avatar_path, ...D.players.map(p => p.avatar_path)]);
+        paintAvatars();
     }
     function setLoggedInOff() {
-        show($('mainNav'), false); show($('addBtn'), false); show($('meBtn'), false); show($('demoHint'), false); show($('offlineHint'), false);
+        show($('mainNav'), false); show($('addBtn'), false); show($('meBtn'), false); show($('offlineHint'), false); show($('headSub'), false);
+        $('meBtn').classList.remove('has-photo'); $('meBtn').innerHTML = '👤';
         onlyView('viewLoggedOut');
     }
 
@@ -549,8 +562,6 @@
     });
     MB.onAuth(ev => { if (ev === 'PASSWORD_RECOVERY') onlyView('viewRecovery'); });
 
-    $('demoBtn').onclick = () => { MB.startDemo(); show($('loginMsg'), false); boot(); };
-    $('demoExit').onclick = async () => { await MB.signOut(); D = null; setLoggedInOff(); };
 
     const menu = $('meMenu');
     $('meBtn').onclick = e => { e.stopPropagation(); const open = menu.hidden; show(menu, open); $('meBtn').setAttribute('aria-expanded', open); };
