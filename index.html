@@ -370,8 +370,8 @@
         $('dlgTitle').textContent = m ? 'Match bearbeiten' : 'Neues Match';
         $('mCat').innerHTML = D.categories.map(c => `<option value="${esc(c.id)}">${c.emoji} ${esc(c.label)}</option>`).join('');
         $('gameList').innerHTML = [...new Set(D.matches.map(x => x.game))].sort().map(g => `<option value="${esc(g)}">`).join('');
-        $('mWinner').innerHTML = D.players.map((p, i) => `<label class="s${i}"><input type="radio" name="winner" value="${esc(p.id)}" required> 🏆 ${esc(p.display_name)}</label>`).join('')
-            + '<label><input type="radio" name="winner" value=""> 🤝 Unentschieden</label>';
+        $('mWinner').innerHTML = D.players.map((p, i) => `<label class="s${i}"><input type="radio" name="winner" value="${esc(p.id)}" required><span class="seg-ico">🏆</span><span class="seg-txt">${esc(p.display_name)}</span></label>`).join('')
+            + '<label><input type="radio" name="winner" value=""><span class="seg-ico">🤝</span><span class="seg-txt">Unentschieden</span></label>';
         $('mLoc').innerHTML = '<option value="">– ohne Ort –</option>' + [...D.locations].sort((a, b) => a.name.localeCompare(b.name, 'de'))
             .map(l => `<option value="${esc(l.id)}">${esc(l.name)}${l.region ? ' · ' + esc(l.region) : ''}</option>`).join('') + '<option value="__new">➕ Neuer Ort …</option>';
         $('mTitle').value = m ? m.title : '';
