@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="de"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#ea580c">
+    <script>(function(){try{if((localStorage.getItem('overall-theme')||localStorage.getItem('mb_theme_v1'))==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+    <title>MatchBoard – Stefan vs. Ines</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏆</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+    <script src="shared/config.js"></script>
+    <script src="shared/matchboard.js"></script>
+    <link rel="stylesheet" href="shared/style.css">
+</head>
+<body>
+<div class="wrap">
+    <header class="sticky-header">
+        <div>
+            <h1>🏆 MatchBoard</h1>
+            <div class="sub" id="headSub">Stefan vs. Ines</div>
+        </div>
+        <div class="header-actions">
+            <button id="themeToggle" class="icon-btn" type="button" aria-label="Zum dunklen Modus wechseln">🌙</button>
+            <div class="me-wrap">
+                <button id="meBtn" class="icon-btn" type="button" aria-label="Mein Konto" aria-haspopup="menu" aria-expanded="false" aria-controls="meMenu" hidden>👤</button>
+                <div id="meMenu" class="me-menu" role="menu" hidden>
+                    <div class="me-head"><b id="menuName"></b><small id="menuRole"></small></div>
+                    <a id="menuKonto" class="me-item" href="/konto.html?from=matchboard" role="menuitem">⚙️ Kontoeinstellungen</a>
+                    <button id="logoutBtn" class="me-item danger" type="button" role="menuitem">🚪 Abmelden</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div id="setupHint" class="banner" hidden>⚙️ Supabase ist noch nicht verbunden: Bitte in <b>shared/config.js</b> die Project URL und den Publishable Key eintragen.</div>
+    <div id="offlineHint" class="banner" hidden>📴 Offline – du siehst den zuletzt geladenen Stand.</div>
+    <div id="demoHint" class="banner" hidden>👀 Demo-Modus mit den Matches vom Sommer 2026. Änderungen bleiben nur in diesem Tab. <button class="link-btn" type="button" id="demoExit">Demo beenden</button></div>
+
+    <nav class="tabs" id="mainNav" aria-label="Bereiche" hidden>
+        <a href="#dashboard" data-tab="dashboard">🏠 Dashboard</a>
+        <a href="#log" data-tab="log">📜 Log</a>
+    </nav>
+
+    <!-- Nicht angemeldet -->
+    <section id="viewLoggedOut" hidden>
+        <div class="hero">
+            <div class="tag">Wer gewinnt öfter? Jedes Match zählt.</div>
+            <p>Kickern, Kniffel, Minigolf oder Mülleimer werfen: Hier tragen Stefan und Ines ihre Mini-Competitions ein, mit Ort, Datum und Gewinner.</p>
+        </div>
+        <div class="grid2">
+            <div class="box">
+                <h2>🔑 Anmelden</h2>
+                <p class="note">Gleiches Konto wie bei Quest Log und TravelBase.</p>
+                <form id="loginForm">
+                    <label>E-Mail<input type="email" id="loginEmail" autocomplete="username" required></label>
+                    <label>Passwort<input type="password" id="loginPassword" autocomplete="current-password" required></label>
+                    <button class="btn" type="submit" id="loginBtn">Anmelden</button>
+                    <button class="link-btn" type="button" id="showReset">Passwort vergessen?</button>
+                </form>
+                <form id="resetForm" hidden>
+                    <label>E-Mail für den Link zum Zurücksetzen<input type="email" id="resetEmail" autocomplete="username" required></label>
+                    <button class="btn" type="submit">Link senden</button>
+                    <button class="link-btn" type="button" id="hideReset">← Zurück zur Anmeldung</button>
+                </form>
+                <div id="loginMsg" class="msg" hidden></div>
+            </div>
+            <div class="box">
+                <h2>👀 Erst mal reinschauen?</h2>
+                <p class="note">Die Demo zeigt Dashboard, Karte und Log mit den zwölf Matches vom Sommer 2026, ohne Login und ohne etwas zu speichern.</p>
+                <button class="btn-ghost" type="button" id="demoBtn">Demo ansehen</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Neues Passwort nach Klick auf den E-Mail-Link -->
+    <section id="viewRecovery" hidden>
+        <div class="box">
+            <h2>🔑 Neues Passwort festlegen</h2>
+            <form id="recoveryForm" style="max-width:360px">
+                <label>Neues Passwort<input type="password" id="recoveryPw" autocomplete="new-password" minlength="8" required></label>
+                <button class="btn" type="submit">Passwort speichern</button>
+            </form>
+            <div id="recoveryMsg" class="msg" hidden></div>
+        </div>
+    </section>
+
+    <div id="appMsg" class="msg err" hidden></div>
+
+    <!-- Dashboard -->
+    <section id="viewDashboard" hidden>
+        <div class="box">
+            <div class="score" id="score"></div>
+            <div class="ratebar" id="rateBar" aria-hidden="true"></div>
+            <div class="leader" id="leader"></div>
+        </div>
+        <div class="box">
+            <div class="stats" id="stats"></div>
+        </div>
+        <div class="box">
+            <h2>🗺️ Wo wurde gespielt?</h2>
+            <div id="map" role="region" aria-label="Karte der Matches"></div>
+            <div class="legend-row" id="mapLegend"></div>
+        </div>
+        <div class="grid2">
+            <div class="box"><h2>🏷️ Nach Kategorie</h2><div id="byCategory"></div></div>
+            <div class="box"><h2>🎮 Nach Spiel</h2><div id="byGame"></div></div>
+        </div>
+        <div class="box">
+            <h2>🕒 Zuletzt gespielt</h2>
+            <div id="recent"></div>
+            <button class="link-btn" type="button" id="toLog" style="margin-top:6px">Ganzes Log ansehen →</button>
+        </div>
+    </section>
+
+    <!-- Log -->
+    <section id="viewLog" hidden>
+        <div class="box">
+            <div class="filters">
+                <label class="wide">Suche<input type="search" id="fText" placeholder="Titel, Spiel, Ort, Notiz …"></label>
+                <label>Kategorie<select id="fCat"></select></label>
+                <label>Gewinner<select id="fWin"></select></label>
+                <label>Ort<select id="fLoc"></select></label>
+                <label>Jahr<select id="fYear"></select></label>
+            </div>
+            <div class="filter-foot"><span id="fCount"></span><button class="link-btn" type="button" id="fReset">Filter zurücksetzen</button></div>
+        </div>
+        <div id="logList"></div>
+    </section>
+</div>
+
+<button class="fab" id="addBtn" type="button" hidden>＋ Match</button>
+
+<!-- Match erfassen / bearbeiten -->
+<dialog id="matchDlg" aria-labelledby="dlgTitle">
+    <div class="dlg-head"><h2 id="dlgTitle">Neues Match</h2><button class="icon-btn" type="button" id="dlgClose" aria-label="Schließen">✕</button></div>
+    <div class="dlg-body">
+        <form id="matchForm">
+            <div class="grid2">
+                <label>Titel<input type="text" id="mTitle" maxlength="120" required placeholder="z. B. Kniffel Italien"></label>
+                <label>Spiel<input type="text" id="mGame" maxlength="60" list="gameList" required placeholder="z. B. Kniffel"></label>
+            </div>
+            <datalist id="gameList"></datalist>
+            <div class="grid2">
+                <label>Kategorie<select id="mCat" required></select></label>
+                <label>Datum<input type="date" id="mDate" required min="2000-01-01"></label>
+            </div>
+            <fieldset>
+                <legend>Wer hat gewonnen?</legend>
+                <div class="seg" id="mWinner"></div>
+            </fieldset>
+            <label>Ort<select id="mLoc"></select></label>
+            <div class="newloc" id="newLoc" hidden>
+                <div class="grid2">
+                    <label>Name des Orts<input type="text" id="lName" maxlength="120" placeholder="z. B. Strandbad Bregenz"></label>
+                    <label>Region (optional)<input type="text" id="lRegion" maxlength="120" placeholder="z. B. Vorarlberg, AT"></label>
+                </div>
+                <div id="pickMap" aria-label="Auf die Karte tippen, um den Ort zu setzen"></div>
+                <div class="row-btns">
+                    <button class="btn-ghost" type="button" id="lGeo">📍 Mein Standort</button>
+                    <span class="note" style="margin:0" id="lCoords">Auf die Karte tippen, um den Punkt zu setzen.</span>
+                </div>
+            </div>
+            <div class="grid2">
+                <label>Ergebnis (optional)<input type="text" id="mScore" maxlength="40" placeholder="z. B. 10:7"></label>
+                <label>Weitere Mitspieler (optional)<input type="text" id="mGuests" maxlength="200" placeholder="z. B. Mohamed, Patrick"></label>
+            </div>
+            <label>Notiz (optional)<textarea id="mNotes" maxlength="1000"></textarea></label>
+            <div class="dlg-foot">
+                <button class="btn-danger" type="button" id="mDelete" hidden>🗑️ Löschen</button>
+                <span></span>
+                <button class="btn" type="submit" id="mSave">Speichern</button>
+            </div>
+            <div id="matchMsg" class="msg err" hidden></div>
+        </form>
+    </div>
+</dialog>
+
+<script>
+(function () {
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const show = (el, on = true) => { el.hidden = !on; };
+    const fmtDate = (d, opts = { day: '2-digit', month: '2-digit', year: 'numeric' }) => new Date(d + 'T12:00:00').toLocaleDateString('de-DE', opts);
+    function msg(el, text, ok) { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); show(el, !!text); }
+
+    let D = null;          /* { players, categories, locations, matches, me, offline, demo } */
+    let map = null, pickMap = null, pickMarker = null, pickPos = null, editing = null;
+
+    /* ───────── Hell/Dunkel ───────── */
+    function applyTheme(dark) {
+        document.documentElement.toggleAttribute('data-theme', false);
+        if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+        $('themeToggle').textContent = dark ? '☀️' : '🌙';
+        $('themeToggle').setAttribute('aria-label', dark ? 'Zum hellen Modus wechseln' : 'Zum dunklen Modus wechseln');
+    }
+    applyTheme(document.documentElement.getAttribute('data-theme') === 'dark');
+    $('themeToggle').onclick = () => {
+        const dark = document.documentElement.getAttribute('data-theme') !== 'dark';
+        try { localStorage.setItem('overall-theme', dark ? 'dark' : 'light'); } catch (e) {}
+        applyTheme(dark);
+    };
+
+    /* ───────── Hilfen rund um Spieler, Kategorien, Orte ───────── */
+    const player = id => D.players.find(p => p.id === id);
+    const pIdx = id => D.players.findIndex(p => p.id === id);           /* 0 = Stefan (Admin), 1 = Ines */
+    const pName = id => (player(id) || {}).display_name || 'Unbekannt';
+    const cat = id => D.categories.find(c => c.id === id) || { label: id, emoji: '🏆', color: '#64748b' };
+    const loc = id => D.locations.find(l => l.id === id);
+    const winClass = m => m.winner_id ? 'w' + Math.max(0, pIdx(m.winner_id)) : 'wd';
+    const winLabel = m => m.winner_id ? '🏆 ' + pName(m.winner_id) : '🤝 Unentschieden';
+    const byTime = (a, b) => (a.played_on + (a.created_at || '')).localeCompare(b.played_on + (b.created_at || ''));
+
+    function tally(list) {
+        const t = { n: list.length, w: D.players.map(() => 0), draw: 0 };
+        list.forEach(m => { if (!m.winner_id) t.draw++; else { const i = pIdx(m.winner_id); if (i >= 0) t.w[i]++; } });
+        return t;
+    }
+
+    /* ───────── Dashboard ───────── */
+    function renderDashboard() {
+        const P = D.players, t = tally(D.matches);
+        const pct = x => t.n ? Math.round(100 * x / t.n) : 0;
+        $('score').innerHTML = `
+            <div class="side p0"><b>${t.w[0] || 0}</b><span>${esc(P[0] && P[0].display_name)}</span><small>${pct(t.w[0] || 0)} % Siegquote</small></div>
+            <div class="mid"><b>:</b>${t.draw} × 🤝</div>
+            <div class="side p1"><b>${t.w[1] || 0}</b><span>${esc(P[1] && P[1].display_name)}</span><small>${pct(t.w[1] || 0)} % Siegquote</small></div>`;
+        $('rateBar').innerHTML = t.n ? `<div class="r0" style="width:${100 * (t.w[0] || 0) / t.n}%"></div><div class="rd" style="width:${100 * t.draw / t.n}%"></div><div class="r1" style="width:${100 * (t.w[1] || 0) / t.n}%"></div>` : '';
+        const diff = (t.w[0] || 0) - (t.w[1] || 0);
+        $('leader').innerHTML = !t.n ? 'Noch keine Matches – leg los mit „＋ Match“.'
+            : diff === 0 ? 'Gleichstand! 🤝'
+            : `<span class="c${diff > 0 ? 0 : 1}">${esc(P[diff > 0 ? 0 : 1].display_name)}</span> führt mit ${Math.abs(diff)} ${Math.abs(diff) === 1 ? 'Sieg' : 'Siegen'} Vorsprung`;
+
+        /* Serien: aktuelle (vom neuesten Match rückwärts) und längste je Spieler */
+        const chrono = [...D.matches].sort(byTime);
+        let cur = null, curLen = 0; const best = P.map(() => 0); let run = null, runLen = 0;
+        chrono.forEach(m => {
+            if (m.winner_id && m.winner_id === run) runLen++; else { run = m.winner_id; runLen = 1; }
+            const i = pIdx(run); if (run && i >= 0) best[i] = Math.max(best[i], runLen);
+        });
+        for (let i = chrono.length - 1; i >= 0; i--) {
+            const w = chrono[i].winner_id;
+            if (!w) break;
+            if (cur === null) cur = w;
+            if (w !== cur) break;
+            curLen++;
+        }
+        const games = new Set(D.matches.map(m => m.game.toLowerCase()));
+        const places = new Set(D.matches.map(m => m.location_id).filter(Boolean));
+        const days = new Set(D.matches.map(m => m.played_on));
+        const tile = (v, l) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`;
+        $('stats').innerHTML = [
+            tile(t.n, 'Matches gesamt'),
+            tile(cur ? `<span class="c${pIdx(cur)}">${curLen}× ${esc(pName(cur))}</span>` : '–', 'Aktuelle Serie'),
+            tile(P.map((p, i) => `<span class="c${i}">${best[i]}</span>`).join(' : '), 'Längste Serie'),
+            tile(games.size, 'Verschiedene Spiele'),
+            tile(places.size, 'Orte'),
+            tile(days.size, 'Spieltage')
+        ].join('');
+
+        /* Aufteilung je Kategorie und je Spiel */
+        const splitRows = groups => groups.map(([name, list]) => {
+            const g = tally(list);
+            return `<div class="split"><span class="name" title="${esc(name)}">${name}</span>
+                <div class="bar"><div style="width:${100 * (g.w[0] || 0) / g.n}%;background:var(--stefan)"></div><div style="width:${100 * g.draw / g.n}%;background:var(--draw);opacity:.45"></div><div style="width:${100 * (g.w[1] || 0) / g.n}%;background:var(--ines)"></div></div>
+                <span class="nums"><span class="c0">${g.w[0] || 0}</span> : <span class="c1">${g.w[1] || 0}</span>${g.draw ? ` <span class="cd">(${g.draw})</span>` : ''}</span></div>`;
+        }).join('') || '<div class="empty">Noch nichts eingetragen.</div>';
+        const group = key => {
+            const m = new Map();
+            D.matches.forEach(x => { const k = key(x); if (!m.has(k)) m.set(k, []); m.get(k).push(x); });
+            return [...m.entries()].sort((a, b) => b[1].length - a[1].length);
+        };
+        $('byCategory').innerHTML = splitRows(D.categories.map(c => [`${c.emoji} ${esc(c.label)}`, D.matches.filter(m => m.category_id === c.id)]).filter(([, l]) => l.length).sort((a, b) => b[1].length - a[1].length));
+        $('byGame').innerHTML = splitRows(group(m => m.game).slice(0, 10).map(([k, l]) => [esc(k), l]));
+
+        $('recent').innerHTML = D.matches.slice(0, 5).map(entryHtml).join('') || '<div class="empty">Noch keine Matches.</div>';
+        renderMap();
+    }
+
+    /* ───────── Karte (Esri Street, wie bei TravelBase) ───────── */
+    const esriStreet = () => L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+        { maxZoom: 19, attribution: 'Tiles &copy; Esri' });
+    function renderMap() {
+        if (!window.L) { $('map').innerHTML = '<div class="empty">Karte konnte nicht geladen werden.</div>'; return; }
+        if (!map) {
+            map = L.map('map', { scrollWheelZoom: false, layers: [esriStreet()] });
+            map.setView([47.1, 9], 7);
+        }
+        if (map._mbLayer) map.removeLayer(map._mbLayer);
+        const layer = L.layerGroup(), pts = [];
+        D.locations.forEach(l => {
+            const list = D.matches.filter(m => m.location_id === l.id);
+            if (!list.length) return;
+            const t = tally(list), d = (t.w[0] || 0) - (t.w[1] || 0);
+            const color = d > 0 ? 'var(--stefan)' : d < 0 ? 'var(--ines)' : 'var(--draw)';
+            const size = 24 + Math.min(list.length, 6) * 3;
+            const icon = L.divIcon({ className: '', html: `<span class="pin" style="background:${color}">${list.length}</span>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+            const popup = `<b>📍 ${esc(l.name)}</b>${l.region ? `<br><small>${esc(l.region)}</small>` : ''}
+                <br><small><span class="c0">${t.w[0] || 0}</span> : <span class="c1">${t.w[1] || 0}</span>${t.draw ? ` · ${t.draw} × 🤝` : ''}</small>
+                <ul>${[...list].sort(byTime).map(m => `<li>${cat(m.category_id).emoji} ${esc(m.title)} · ${fmtDate(m.played_on, { day: '2-digit', month: '2-digit' })} · <b class="c${m.winner_id ? pIdx(m.winner_id) : 'd'}">${m.winner_id ? esc(pName(m.winner_id)) : '🤝'}</b></li>`).join('')}</ul>`;
+            L.marker([l.lat, l.lng], { icon, title: l.name }).bindPopup(popup).addTo(layer);
+            pts.push([l.lat, l.lng]);
+        });
+        layer.addTo(map);
+        map._mbLayer = layer;
+        setTimeout(() => {
+            map.invalidateSize();
+            if (pts.length > 1) map.fitBounds(pts, { padding: [30, 30], maxZoom: 12 });
+            else if (pts.length === 1) map.setView(pts[0], 11);
+        }, 0);
+        $('mapLegend').innerHTML = D.players.map((p, i) => `<span><i class="dot" style="background:var(--${i ? 'ines' : 'stefan'})"></i>${esc(p.display_name)} führt</span>`).join('')
+            + '<span><i class="dot" style="background:var(--draw)"></i>Gleichstand</span><span>Zahl = Matches am Ort</span>';
+    }
+
+    /* ───────── Log ───────── */
+    function entryHtml(m) {
+        const c = cat(m.category_id), l = loc(m.location_id);
+        const meta = [fmtDate(m.played_on), l && '📍 ' + esc(l.name), m.game !== m.title && esc(m.game), m.score && esc(m.score),
+            m.guests && m.guests.length && '👥 mit ' + esc(m.guests.join(', '))].filter(Boolean).join(' · ');
+        return `<div class="entry" data-id="${esc(m.id)}" role="button" tabindex="0" aria-label="${esc(m.title)} bearbeiten">
+            <span class="emo" style="color:${esc(c.color)}" title="${esc(c.label)}">${c.emoji}</span>
+            <div><div class="t">${esc(m.title)}</div><div class="meta">${meta}</div>${m.notes ? `<div class="meta">📝 ${esc(m.notes)}</div>` : ''}</div>
+            <span class="chip ${winClass(m)}">${esc(winLabel(m))}</span></div>`;
+    }
+
+    function fillFilters() {
+        const keep = id => $(id).value;
+        const opts = (id, list, all) => { const v = keep(id); $(id).innerHTML = `<option value="">${all}</option>` + list.map(([k, t]) => `<option value="${esc(k)}">${esc(t)}</option>`).join(''); $(id).value = list.some(([k]) => k === v) ? v : ''; };
+        opts('fCat', D.categories.map(c => [c.id, `${c.emoji} ${c.label}`]), 'Alle');
+        opts('fWin', [...D.players.map(p => [p.id, p.display_name]), ['draw', 'Unentschieden']], 'Alle');
+        opts('fLoc', D.locations.filter(l => D.matches.some(m => m.location_id === l.id)).map(l => [l.id, l.name]), 'Alle');
+        opts('fYear', [...new Set(D.matches.map(m => m.played_on.slice(0, 4)))].sort().reverse().map(y => [y, y]), 'Alle');
+    }
+
+    function renderLog() {
+        const q = $('fText').value.trim().toLowerCase(), fc = $('fCat').value, fw = $('fWin').value, fl = $('fLoc').value, fy = $('fYear').value;
+        const list = D.matches.filter(m => {
+            if (fc && m.category_id !== fc) return false;
+            if (fw === 'draw' ? m.winner_id : fw && m.winner_id !== fw) return false;
+            if (fl && m.location_id !== fl) return false;
+            if (fy && !m.played_on.startsWith(fy)) return false;
+            if (q) {
+                const l = loc(m.location_id);
+                const hay = [m.title, m.game, m.notes, m.score, (m.guests || []).join(' '), l && l.name, l && l.region, cat(m.category_id).label, pName(m.winner_id)].join(' ').toLowerCase();
+                if (!hay.includes(q)) return false;
+            }
+            return true;
+        });
+        const t = tally(list);
+        $('fCount').innerHTML = `${list.length} von ${D.matches.length} Matches${list.length ? ` · <span class="c0">${t.w[0] || 0}</span> : <span class="c1">${t.w[1] || 0}</span>${t.draw ? ` · ${t.draw} × 🤝` : ''}` : ''}`;
+        let html = '', lastDay = null;
+        list.forEach(m => {
+            if (m.played_on !== lastDay) { html += `<div class="day">${fmtDate(m.played_on, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>`; lastDay = m.played_on; }
+            html += entryHtml(m);
+        });
+        $('logList').innerHTML = html || '<div class="box empty">Keine Matches für diese Filter.</div>';
+    }
+    ['fText', 'fCat', 'fWin', 'fLoc', 'fYear'].forEach(id => $(id).addEventListener('input', renderLog));
+    $('fReset').onclick = () => { ['fText', 'fCat', 'fWin', 'fLoc', 'fYear'].forEach(id => { $(id).value = ''; }); renderLog(); };
+
+    /* Klick auf einen Eintrag öffnet ihn zum Bearbeiten */
+    document.addEventListener('click', e => { const el = e.target.closest('.entry'); if (el) openMatch(D.matches.find(m => m.id === el.dataset.id)); });
+    document.addEventListener('keydown', e => { const el = e.target.closest && e.target.closest('.entry'); if (el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); el.click(); } });
+
+    /* ───────── Match erfassen / bearbeiten ───────── */
+    function openMatch(m) {
+        if (D.offline) { msg($('appMsg'), 'Offline kann nichts gespeichert werden.'); return; }
+        editing = m || null;
+        $('dlgTitle').textContent = m ? 'Match bearbeiten' : 'Neues Match';
+        $('mCat').innerHTML = D.categories.map(c => `<option value="${esc(c.id)}">${c.emoji} ${esc(c.label)}</option>`).join('');
+        $('gameList').innerHTML = [...new Set(D.matches.map(x => x.game))].sort().map(g => `<option value="${esc(g)}">`).join('');
+        $('mWinner').innerHTML = D.players.map((p, i) => `<label class="s${i}"><input type="radio" name="winner" value="${esc(p.id)}" required> 🏆 ${esc(p.display_name)}</label>`).join('')
+            + '<label><input type="radio" name="winner" value=""> 🤝 Unentschieden</label>';
+        $('mLoc').innerHTML = '<option value="">– ohne Ort –</option>' + [...D.locations].sort((a, b) => a.name.localeCompare(b.name, 'de'))
+            .map(l => `<option value="${esc(l.id)}">${esc(l.name)}${l.region ? ' · ' + esc(l.region) : ''}</option>`).join('') + '<option value="__new">➕ Neuer Ort …</option>';
+        $('mTitle').value = m ? m.title : '';
+        $('mGame').value = m ? m.game : '';
+        $('mCat').value = m ? m.category_id : 'sport';
+        $('mDate').value = m ? m.played_on : MB.today();
+        $('mDate').max = MB.today();
+        const w = m ? (m.winner_id || '') : null;
+        document.querySelectorAll('#mWinner input').forEach(r => { r.checked = w !== null && r.value === w; });
+        const lastLoc = !m && D.matches[0] && D.matches[0].location_id;   /* neues Match: Ort vom letzten Eintrag vorschlagen */
+        $('mLoc').value = m ? (m.location_id || '') : (lastLoc || '');
+        $('mScore').value = m && m.score || '';
+        $('mGuests').value = m && m.guests ? m.guests.join(', ') : '';
+        $('mNotes').value = m && m.notes || '';
+        const canDelete = m && (D.me.role === 'admin' || m.created_by === D.me.id);
+        show($('mDelete'), !!canDelete);
+        show($('newLoc'), false);
+        show($('matchMsg'), false);
+        $('matchDlg').showModal();
+    }
+
+    /* Titel → Spiel vorschlagen ("Kickern Italien" → "Kickern"), solange Spiel leer ist */
+    $('mTitle').addEventListener('change', () => {
+        if ($('mGame').value.trim()) return;
+        const t = $('mTitle').value.trim().toLowerCase();
+        const g = [...new Set(D.matches.map(x => x.game))].find(g => t.startsWith(g.toLowerCase()));
+        $('mGame').value = g || $('mTitle').value.trim();
+        suggestCategory();
+    });
+    /* Spiel → Kategorie vom letzten Match dieses Spiels übernehmen */
+    function suggestCategory() {
+        const prev = D.matches.find(x => x.game.toLowerCase() === $('mGame').value.trim().toLowerCase());
+        if (prev && !editing) $('mCat').value = prev.category_id;
+    }
+    $('mGame').addEventListener('change', suggestCategory);
+
+    $('mLoc').addEventListener('change', () => {
+        const isNew = $('mLoc').value === '__new';
+        show($('newLoc'), isNew);
+        if (isNew) initPickMap();
+    });
+
+    function setPick(lat, lng) {
+        pickPos = { lat: +lat.toFixed(5), lng: +lng.toFixed(5) };
+        if (pickMarker) pickMarker.setLatLng([lat, lng]); else pickMarker = L.marker([lat, lng]).addTo(pickMap);
+        $('lCoords').textContent = `📍 ${pickPos.lat}, ${pickPos.lng}`;
+    }
+    function initPickMap() {
+        pickPos = null;
+        $('lName').value = ''; $('lRegion').value = '';
+        $('lCoords').textContent = 'Auf die Karte tippen, um den Punkt zu setzen.';
+        if (!window.L) return;
+        if (!pickMap) {
+            pickMap = L.map('pickMap', { layers: [esriStreet()] });
+            pickMap.on('click', e => setPick(e.latlng.lat, e.latlng.lng));
+        }
+        if (pickMarker) { pickMap.removeLayer(pickMarker); pickMarker = null; }
+        const last = D.locations[D.locations.length - 1];
+        pickMap.setView(last ? [last.lat, last.lng] : [47.1, 9], last ? 9 : 6);
+        setTimeout(() => pickMap.invalidateSize(), 50);
+    }
+    $('lGeo').onclick = () => {
+        if (!navigator.geolocation) { $('lCoords').textContent = 'Standort wird von diesem Gerät nicht unterstützt.'; return; }
+        $('lCoords').textContent = 'Standort wird ermittelt …';
+        navigator.geolocation.getCurrentPosition(p => { setPick(p.coords.latitude, p.coords.longitude); pickMap.setView([p.coords.latitude, p.coords.longitude], 14); },
+            () => { $('lCoords').textContent = 'Standort nicht verfügbar. Bitte auf die Karte tippen.'; }, { enableHighAccuracy: true, timeout: 10000 });
+    };
+
+    $('dlgClose').onclick = () => $('matchDlg').close();
+    $('matchForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const btn = $('mSave'); btn.disabled = true; show($('matchMsg'), false);
+        try {
+            let location_id = $('mLoc').value || null;
+            if (location_id === '__new') {
+                if (!$('lName').value.trim()) throw new Error('Bitte einen Namen für den neuen Ort eingeben.');
+                if (!pickPos) throw new Error('Bitte den neuen Ort auf der Karte setzen.');
+                const l = await MB.addLocation({ name: $('lName').value, region: $('lRegion').value, ...pickPos });
+                if (!D.demo) D.locations.push(l);
+                location_id = l.id;
+            }
+            const winner = document.querySelector('#mWinner input:checked');
+            if (!winner) throw new Error('Bitte auswählen, wer gewonnen hat.');
+            const saved = await MB.saveMatch({
+                id: editing && editing.id, title: $('mTitle').value.trim(), game: $('mGame').value.trim(), category_id: $('mCat').value,
+                played_on: $('mDate').value, location_id, winner_id: winner.value || null, score: $('mScore').value.trim(),
+                guests: $('mGuests').value.split(',').map(s => s.trim()).filter(Boolean), notes: $('mNotes').value.trim()
+            });
+            if (!D.demo) {
+                D.matches = D.matches.filter(m => m.id !== saved.id).concat(saved).sort((a, b) => byTime(b, a));
+            } else D.matches.sort((a, b) => byTime(b, a));
+            $('matchDlg').close();
+            renderAll();
+        } catch (err) {
+            msg($('matchMsg'), MB.errorText(err));
+        } finally { btn.disabled = false; }
+    });
+    $('mDelete').onclick = async () => {
+        if (!editing || !confirm(`„${editing.title}“ wirklich löschen?`)) return;
+        try {
+            await MB.deleteMatch(editing.id);
+            if (!D.demo) D.matches = D.matches.filter(m => m.id !== editing.id);
+            $('matchDlg').close();
+            renderAll();
+        } catch (err) { msg($('matchMsg'), MB.errorText(err)); }
+    };
+    $('addBtn').onclick = () => openMatch(null);
+    $('toLog').onclick = () => { location.hash = '#log'; };
+
+    /* ───────── Bereiche & Anmeldung ───────── */
+    const VIEWS = ['viewLoggedOut', 'viewRecovery', 'viewDashboard', 'viewLog'];
+    function onlyView(id) { VIEWS.forEach(v => show($(v), v === id)); }
+
+    function renderAll() {
+        fillFilters();
+        const tab = location.hash === '#log' ? 'log' : 'dashboard';
+        document.querySelectorAll('#mainNav a').forEach(a => a.classList.toggle('on', a.dataset.tab === tab));
+        onlyView(tab === 'log' ? 'viewLog' : 'viewDashboard');
+        if (tab === 'log') renderLog(); else renderDashboard();
+    }
+    window.addEventListener('hashchange', () => { if (D) renderAll(); });
+
+    function setLoggedIn(on) {
+        show($('mainNav'), on); show($('addBtn'), on && !D.offline); show($('meBtn'), on);
+        show($('demoHint'), on && D.demo); show($('offlineHint'), on && D.offline);
+    }
+
+    async function boot() {
+        show($('setupHint'), !MB.configured);
+        show($('appMsg'), false);
+        try {
+            D = await MB.loadAll();
+        } catch (e) {
+            D = null;
+            onlyView('viewLoggedOut');
+            msg($('loginMsg'), MB.errorText(e));
+            show($('meBtn'), !!(await MB.getSession()));
+            return;
+        }
+        if (!D) { setLoggedInOff(); return; }
+        D.matches.sort((a, b) => byTime(b, a));
+        const me = player(D.me.id);
+        $('menuName').textContent = me ? me.display_name : D.me.email;
+        $('menuRole').textContent = D.demo ? 'Demo' : D.me.role === 'admin' ? 'Admin' : 'Mitglied';
+        $('headSub').textContent = D.players.map(p => p.display_name).join(' vs. ') || 'Stefan vs. Ines';
+        setLoggedIn(true);
+        renderAll();
+    }
+    function setLoggedInOff() {
+        show($('mainNav'), false); show($('addBtn'), false); show($('meBtn'), false); show($('demoHint'), false); show($('offlineHint'), false);
+        onlyView('viewLoggedOut');
+    }
+
+    $('loginForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const btn = $('loginBtn'); btn.disabled = true; show($('loginMsg'), false);
+        try { await MB.signIn($('loginEmail').value.trim(), $('loginPassword').value); await boot(); }
+        catch (err) { msg($('loginMsg'), MB.errorText(err)); }
+        finally { btn.disabled = false; }
+    });
+    $('showReset').onclick = () => { show($('loginForm'), false); show($('resetForm'), true); };
+    $('hideReset').onclick = () => { show($('loginForm'), true); show($('resetForm'), false); };
+    $('resetForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        try { await MB.resetPassword($('resetEmail').value.trim()); msg($('loginMsg'), 'Link ist unterwegs – schau in dein Postfach.', true); }
+        catch (err) { msg($('loginMsg'), MB.errorText(err)); }
+    });
+    $('recoveryForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        try { await MB.updatePassword($('recoveryPw').value); msg($('recoveryMsg'), 'Passwort gespeichert.', true); setTimeout(boot, 800); }
+        catch (err) { msg($('recoveryMsg'), MB.errorText(err)); }
+    });
+    MB.onAuth(ev => { if (ev === 'PASSWORD_RECOVERY') onlyView('viewRecovery'); });
+
+    $('demoBtn').onclick = () => { MB.startDemo(); show($('loginMsg'), false); boot(); };
+    $('demoExit').onclick = async () => { await MB.signOut(); D = null; setLoggedInOff(); };
+
+    const menu = $('meMenu');
+    $('meBtn').onclick = e => { e.stopPropagation(); const open = menu.hidden; show(menu, open); $('meBtn').setAttribute('aria-expanded', open); };
+    document.addEventListener('click', e => { if (!menu.hidden && !menu.contains(e.target)) { show(menu, false); $('meBtn').setAttribute('aria-expanded', false); } });
+    $('logoutBtn').onclick = async () => { show(menu, false); await MB.signOut(); D = null; setLoggedInOff(); };
+
+    boot();
+})();
+</script>
+</body>
+</html>
