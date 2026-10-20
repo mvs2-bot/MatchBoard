@@ -1,0 +1,17 @@
+{
+  "id": "matchboard-app",
+  "name": "MatchBoard – Stefan vs. Ines",
+  "short_name": "MatchBoard",
+  "description": "Gemeinsames Log aller Mini-Competitions: wer gewonnen hat, was gespielt wurde, wo und wann.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f6f3",
+  "theme_color": "#ea580c",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
