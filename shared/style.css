@@ -13,7 +13,7 @@
     --danger: #f87171; --danger-soft: #2a0e0e; --shadow: none;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; padding: 0 24px 96px; min-height: 100vh; }
+body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; padding: 0 24px 32px; min-height: 100vh; }
 button, input, textarea, select { font: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 3px solid var(--p1); outline-offset: 2px; }
@@ -74,12 +74,12 @@ input:focus, textarea:focus, select:focus { border-color: var(--p1-line); outlin
 
 /* Navigation */
 .tabs { display: flex; gap: 6px; margin-bottom: 18px; }
-.tabs a { flex: 0 0 auto; text-decoration: none; font-weight: 800; font-size: .92rem; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; }
-.tabs a:hover { border-color: var(--p1); }
+.tabs a, .tab-add { flex: 1 1 0; text-align: center; text-decoration: none; font-weight: 800; font-size: .92rem; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; box-shadow: var(--shadow); white-space: nowrap; }
+.tabs a:hover, .tab-add:hover { border-color: var(--p1); background: var(--hover); }
 .tabs a.on { background: var(--p1); border-color: var(--p1); color: #fff; }
 :root[data-theme="dark"] .tabs a.on { color: #2a1206; }
-.fab { position: fixed; right: max(20px, calc((100vw - 1040px) / 2)); bottom: 22px; z-index: 900; background: var(--p1); color: #fff; border: 0; border-radius: 999px; padding: 14px 22px; font-weight: 800; font-size: 1rem; box-shadow: 0 8px 24px rgba(234,88,12,.35); }
-:root[data-theme="dark"] .fab { color: #2a1206; }
+/* "+ Match" ist eine Aktion, kein Bereich: Akzentfarbe statt Füllung, damit es sich vom aktiven Tab abhebt */
+.tab-add { color: var(--ink); background: var(--p1-soft); border: 2px dashed var(--p1); padding: 8px 12px; }
 
 
 /* Scoreboard */
@@ -167,7 +167,9 @@ legend { font-size: .78rem; font-weight: 700; color: var(--mute); margin-bottom:
 .dlg-foot { display: flex; justify-content: space-between; gap: 10px; margin-top: 6px; }
 
 @media (max-width: 760px) {
-    body { padding: 0 14px 96px; }
+    body { padding: 0 14px 24px; }
+    .tabs a, .tab-add { padding: 8px 6px; font-size: .84rem; }
+    .tab-add { padding: 7px 6px; }
     .grid2 { grid-template-columns: 1fr; }
     .filters { grid-template-columns: 1fr 1fr; }
     .filters .wide { grid-column: 1 / -1; }
