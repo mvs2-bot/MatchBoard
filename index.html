@@ -3,7 +3,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <meta name="theme-color" content="#ea580c">
+    <meta name="theme-color" content="#f2f2f7">
     <script>(function(){try{if((localStorage.getItem('overall-theme')||localStorage.getItem('mb_theme_v1'))==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
     <title>MatchBoard – Stefan vs. Ines</title>
     <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -14,9 +14,6 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="MatchBoard">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
@@ -26,39 +23,80 @@
 <script src="shared/ios-nav.js" defer></script>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+        <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M10 17h4M8.5 20.5h7"/></symbol>
+        <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+        <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></symbol>
+        <symbol id="i-person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></symbol>
+        <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.5 3 8.5 7 10 4-1.5 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+        <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3M15.5 16.5 20 12l-4.5-4.5M20 12H9"/></symbol>
+        <symbol id="i-wifi-off" viewBox="0 0 24 24"><path d="M3 3l18 18M8.5 16.4a5 5 0 0 1 6.2-.7M5 12.9a10 10 0 0 1 4.3-2.5M19 12.9a10 10 0 0 0-2.6-1.8M2 9.3A15 15 0 0 1 6 6.6M22 9.3A15 15 0 0 0 11 5.1M12 20h.01"/></symbol>
+        <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.8"/></symbol>
+        <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+        <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4.5"/><path d="M11.2 11.8 20 3M16.5 6.5l3 3M14 9l2 2"/></symbol>
+        <symbol id="i-map" viewBox="0 0 24 24"><path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6zM9 4v14M15 6v14"/></symbol>
+        <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3.5 12.5V4.5a1 1 0 0 1 1-1h8l8.5 8.5-9 9z"/><circle cx="8" cy="8" r="1.5"/></symbol>
+        <symbol id="i-game" viewBox="0 0 24 24"><path d="M6.5 7.5h11a4.5 4.5 0 0 1 4.4 5.4l-.6 3a3 3 0 0 1-5.2 1.4L14.5 15.5h-5L7.9 17.3a3 3 0 0 1-5.2-1.4l-.6-3a4.5 4.5 0 0 1 4.4-5.4z"/><path d="M7.5 10.5v3M6 12h3M15.5 11h.01M17.5 13h.01"/></symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></symbol>
+        <symbol id="i-xmark" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+        <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></symbol>
+        <symbol id="i-location" viewBox="0 0 24 24"><path d="M3.5 11 20.5 3.5 13 20.5l-2-7.5z"/></symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+        <symbol id="i-equal" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 10h8M8 14h8"/></symbol>
+        <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></symbol>
+        <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 4h10l4 4v12H5zM14.5 4v4.5H19M8.5 13h7M8.5 16.5h4.5"/></symbol>
+        <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+        <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+        <symbol id="i-ball" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m12 7.5 4 2.9-1.5 4.6h-5L8 10.4zM12 3v4.5M16 10.4l4.3-1.5M14.5 15l2.7 3.7M9.5 15l-2.7 3.7M8 10.4 3.7 8.9"/></symbol>
+        <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></symbol>
+        <symbol id="i-cards" viewBox="0 0 24 24"><path d="M9 3h8.5a2 2 0 0 1 2 2v11.5"/><rect x="4.5" y="6.5" width="11.5" height="14.5" rx="2"/><path d="m10.2 10.5 2.3 3.3-2.3 3.3-2.3-3.3z"/></symbol>
+        <symbol id="i-die" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path stroke-width="2.8" d="M8.6 8.6h.01M15.4 8.6h.01M12 12h.01M8.6 15.4h.01M15.4 15.4h.01"/></symbol>
+        <symbol id="i-pawn" viewBox="0 0 24 24"><circle cx="12" cy="6" r="2.8"/><path d="M10 9.2 9 14h6l-1-4.8M8.5 14h7M7 20.5h10l-1.4-4H8.4z"/></symbol>
+        <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9.5 18h5M10.5 21h3M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.1v.1h5v-.1c0-.8.4-1.6 1.1-2.1A6 6 0 0 0 12 3z"/></symbol>
+        <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M11 3.5l1.7 4.8 4.8 1.7-4.8 1.7L11 16.5l-1.7-4.8L4.5 10l4.8-1.7zM18 14.5l.8 2.2 2.2.8-2.2.8L18 20.5l-.8-2.2-2.2-.8 2.2-.8z"/></symbol>
+    </defs>
+</svg>
 <div class="wrap">
     <header class="sticky-header">
-        <div>
-            <h1>🏆 MatchBoard</h1>
-            <div class="sub" id="headSub" hidden></div>
+        <div class="brand">
+            <span class="brand-ic"><svg class="ic" aria-hidden="true"><use href="#i-trophy"/></svg></span>
+            <div>
+                <h1>MatchBoard</h1>
+                <div class="sub" id="headSub" hidden></div>
+            </div>
         </div>
         <div class="header-actions">
-            <button id="themeToggle" class="icon-btn" type="button" aria-label="Zum dunklen Modus wechseln">🌙</button>
+            <button id="themeToggle" class="icon-btn" type="button" aria-label="Zum dunklen Modus wechseln"><svg class="ic" aria-hidden="true"><use href="#i-moon"/></svg></button>
             <div class="me-wrap">
-                <button id="meBtn" class="icon-btn me-btn" type="button" aria-label="Mein Konto" aria-haspopup="menu" aria-expanded="false" aria-controls="meMenu" hidden>👤</button>
+                <button id="meBtn" class="icon-btn me-btn" type="button" aria-label="Mein Konto" aria-haspopup="menu" aria-expanded="false" aria-controls="meMenu" hidden><svg class="ic" aria-hidden="true"><use href="#i-person"/></svg></button>
                 <div id="meMenu" class="me-menu" role="menu" hidden>
                     <div class="me-head"><span id="menuAva" class="ava"></span><div><b id="menuName"></b></div></div>
-                    <a id="menuKonto" class="me-item" href="/konto.html?from=matchboard#app-matchboard" role="menuitem">⚙️ Kontoeinstellungen</a>
-                    <a id="menuAdmin" class="me-item" href="/admin.html?from=matchboard#app-matchboard" role="menuitem" hidden>🛡️ Admin-Einstellungen</a>
-                    <button id="logoutBtn" class="me-item danger" type="button" role="menuitem">🚪 Abmelden</button>
+                    <a id="menuKonto" class="me-item" href="/konto.html?from=matchboard#app-matchboard" role="menuitem"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg>Kontoeinstellungen</a>
+                    <a id="menuAdmin" class="me-item" href="/admin.html?from=matchboard#app-matchboard" role="menuitem" hidden><svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>Admin-Einstellungen</a>
+                    <button id="logoutBtn" class="me-item danger" type="button" role="menuitem"><svg class="ic" aria-hidden="true"><use href="#i-logout"/></svg>Abmelden</button>
                 </div>
             </div>
         </div>
     </header>
 
-    <div id="setupHint" class="banner" hidden>⚙️ Supabase ist noch nicht verbunden: Bitte in <b>shared/config.js</b> die Project URL und den Publishable Key eintragen.</div>
-    <div id="offlineHint" class="banner" hidden>📴 Offline – du siehst den zuletzt geladenen Stand.</div>
+    <div id="setupHint" class="banner" hidden><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg><span>Supabase ist noch nicht verbunden: Bitte in <b>shared/config.js</b> die Project URL und den Publishable Key eintragen.</span></div>
+    <div id="offlineHint" class="banner" hidden><svg class="ic" aria-hidden="true"><use href="#i-wifi-off"/></svg><span>Offline – du siehst den zuletzt geladenen Stand.</span></div>
 
     <nav class="tabs" id="mainNav" aria-label="Bereiche" hidden>
-        <a href="#dashboard" data-tab="dashboard">🏠 Dashboard</a>
-        <a href="#log" data-tab="log">📜 Log</a>
-        <button class="tab-add" id="addBtn" type="button" hidden>＋ Match</button>
+        <div class="seg-nav">
+            <a href="#dashboard" data-tab="dashboard"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg>Dashboard</a>
+            <a href="#log" data-tab="log"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg>Log</a>
+        </div>
+        <button class="tab-add" id="addBtn" type="button" hidden><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Match</button>
     </nav>
 
     <!-- Nicht angemeldet: nur die Anmeldung, keine Inhalte -->
     <section id="viewLoggedOut" hidden>
         <div class="box login-box">
-            <h2>🔑 Anmelden</h2>
+            <h2><svg class="ic" aria-hidden="true"><use href="#i-key"/></svg>Anmelden</h2>
             <p class="note">Gleiches Konto wie bei Quest Log und TravelBase.</p>
             <form id="loginForm">
                 <label>E-Mail<input type="email" id="loginEmail" autocomplete="username" required></label>
@@ -69,7 +107,7 @@
             <form id="resetForm" hidden>
                 <label>E-Mail für den Link zum Zurücksetzen<input type="email" id="resetEmail" autocomplete="username" required></label>
                 <button class="btn" type="submit">Link senden</button>
-                <button class="link-btn" type="button" id="hideReset">← Zurück zur Anmeldung</button>
+                <button class="link-btn" type="button" id="hideReset"><svg class="ic sm" aria-hidden="true"><use href="#i-chevron-left"/></svg>Zurück zur Anmeldung</button>
             </form>
             <div id="loginMsg" class="msg" hidden></div>
         </div>
@@ -78,7 +116,7 @@
     <!-- Neues Passwort nach Klick auf den E-Mail-Link -->
     <section id="viewRecovery" hidden>
         <div class="box">
-            <h2>🔑 Neues Passwort festlegen</h2>
+            <h2><svg class="ic" aria-hidden="true"><use href="#i-key"/></svg>Neues Passwort festlegen</h2>
             <form id="recoveryForm" style="max-width:360px">
                 <label>Neues Passwort<input type="password" id="recoveryPw" autocomplete="new-password" minlength="8" required></label>
                 <button class="btn" type="submit">Passwort speichern</button>
@@ -100,18 +138,18 @@
             <div class="stats" id="stats"></div>
         </div>
         <div class="box">
-            <h2>🗺️ Wo wurde gespielt?</h2>
+            <h2><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg>Wo wurde gespielt?</h2>
             <div id="map" role="region" aria-label="Karte der Matches"></div>
             <div class="legend-row" id="mapLegend"></div>
         </div>
         <div class="grid2">
-            <div class="box"><h2>🏷️ Nach Kategorie</h2><div id="byCategory"></div></div>
-            <div class="box"><h2>🎮 Nach Spiel</h2><div id="byGame"></div></div>
+            <div class="box"><h2><svg class="ic" aria-hidden="true"><use href="#i-tag"/></svg>Nach Kategorie</h2><div id="byCategory"></div></div>
+            <div class="box"><h2><svg class="ic" aria-hidden="true"><use href="#i-game"/></svg>Nach Spiel</h2><div id="byGame"></div></div>
         </div>
         <div class="box">
-            <h2>🕒 Zuletzt gespielt</h2>
+            <h2><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg>Zuletzt gespielt</h2>
             <div id="recent"></div>
-            <button class="link-btn" type="button" id="toLog" style="margin-top:6px">Ganzes Log ansehen →</button>
+            <button class="link-btn" type="button" id="toLog" style="margin-top:10px">Ganzes Log ansehen<svg class="ic sm" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
         </div>
     </section>
 
@@ -133,7 +171,7 @@
 
 <!-- Match erfassen / bearbeiten -->
 <dialog id="matchDlg" aria-labelledby="dlgTitle">
-    <div class="dlg-head"><h2 id="dlgTitle">Neues Match</h2><button class="icon-btn" type="button" id="dlgClose" aria-label="Schließen">✕</button></div>
+    <div class="dlg-head"><h2 id="dlgTitle">Neues Match</h2><button class="icon-btn" type="button" id="dlgClose" aria-label="Schließen"><svg class="ic" aria-hidden="true"><use href="#i-xmark"/></svg></button></div>
     <div class="dlg-body">
         <form id="matchForm">
             <div class="grid2">
@@ -157,14 +195,14 @@
                 </div>
                 <div class="locsearch">
                     <div class="row-btns">
-                        <input type="search" id="lSearch" maxlength="120" placeholder="🔎 Ort suchen, z. B. Strandbad Bregenz" autocomplete="off" enterkeyhint="search">
+                        <input type="search" id="lSearch" maxlength="120" placeholder="Ort suchen, z. B. Strandbad Bregenz" autocomplete="off" enterkeyhint="search">
                         <button class="btn-ghost" type="button" id="lSearchBtn">Suchen</button>
                     </div>
                     <ul class="locresults" id="lResults" hidden></ul>
                 </div>
                 <div id="pickMap" aria-label="Auf die Karte tippen, um den Ort zu setzen"></div>
                 <div class="row-btns">
-                    <button class="btn-ghost" type="button" id="lGeo">📍 Mein Standort</button>
+                    <button class="btn-ghost" type="button" id="lGeo"><svg class="ic" aria-hidden="true"><use href="#i-location"/></svg>Mein Standort</button>
                     <span class="note" style="margin:0" id="lCoords">Auf die Karte tippen, um den Punkt zu setzen.</span>
                 </div>
             </div>
@@ -174,7 +212,7 @@
             </div>
             <label>Notiz (optional)<textarea id="mNotes" maxlength="1000"></textarea></label>
             <div class="dlg-foot">
-                <button class="btn-danger" type="button" id="mDelete" hidden>🗑️ Löschen</button>
+                <button class="btn-danger" type="button" id="mDelete" hidden><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>Löschen</button>
                 <span></span>
                 <button class="btn" type="submit" id="mSave">Speichern</button>
             </div>
@@ -191,6 +229,11 @@
     const fmtDate = (d, opts = { day: '2-digit', month: '2-digit', year: 'numeric' }) => new Date(d + 'T12:00:00').toLocaleDateString('de-DE', opts);
     function msg(el, text, ok) { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); show(el, !!text); }
 
+    /* Linien-Symbole aus dem SVG-Sprite; Kategorien bekannter IDs bekommen ein Symbol, neue behalten ihr Emoji */
+    const ic = (n, cls) => `<svg class="ic${cls ? ' ' + cls : ''}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+    const CAT_IC = { sport: 'ball', geschick: 'target', karten: 'cards', wuerfel: 'die', brett: 'pawn', quiz: 'bulb', video: 'game', sonstiges: 'sparkles' };
+    const catIcon = (c, cls = 'cat-ic') => `<span class="${cls}" style="--cc:${esc(c.color)}" title="${esc(c.label)}">${CAT_IC[c.id] ? ic(CAT_IC[c.id]) : esc(c.emoji)}</span>`;
+
     let D = null;          /* { players, categories, locations, matches, me, offline } */
     let map = null, pickMap = null, pickMarker = null, pickPos = null, editing = null;
 
@@ -198,7 +241,8 @@
     function applyTheme(dark) {
         document.documentElement.toggleAttribute('data-theme', false);
         if (dark) document.documentElement.setAttribute('data-theme', 'dark');
-        $('themeToggle').textContent = dark ? '☀️' : '🌙';
+        $('themeToggle').innerHTML = ic(dark ? 'sun' : 'moon');
+        document.querySelector('meta[name="theme-color"]').content = dark ? '#000000' : '#f2f2f7';
         $('themeToggle').setAttribute('aria-label', dark ? 'Zum hellen Modus wechseln' : 'Zum dunklen Modus wechseln');
     }
     applyTheme(document.documentElement.getAttribute('data-theme') === 'dark');
@@ -215,7 +259,7 @@
     const cat = id => D.categories.find(c => c.id === id) || { label: id, emoji: '🏆', color: '#64748b' };
     const loc = id => D.locations.find(l => l.id === id);
     const winClass = m => m.winner_id ? 'w' + Math.max(0, pIdx(m.winner_id)) : 'wd';
-    const winLabel = m => m.winner_id ? '🏆 ' + pName(m.winner_id) : '🤝 Unentschieden';
+    const winLabel = m => m.winner_id ? pName(m.winner_id) : 'Unentschieden';
     const byTime = (a, b) => (a.played_on + (a.created_at || '')).localeCompare(b.played_on + (b.created_at || ''));
 
     function tally(list) {
@@ -230,12 +274,12 @@
         const pct = x => t.n ? Math.round(100 * x / t.n) : 0;
         $('score').innerHTML = `
             <div class="side p0">${P[0] ? `<span class="ava ava-lg" data-ava="${esc(P[0].id)}"></span>` : ''}<b>${t.w[0] || 0}</b><span>${esc(P[0] && P[0].display_name)}</span><small>${pct(t.w[0] || 0)} % Siegquote</small></div>
-            <div class="mid"><b>:</b>${t.draw} × 🤝</div>
+            <div class="mid"><b>:</b>${t.draw} × ${ic('equal', 'sm')}</div>
             <div class="side p1">${P[1] ? `<span class="ava ava-lg" data-ava="${esc(P[1].id)}"></span>` : ''}<b>${t.w[1] || 0}</b><span>${esc(P[1] && P[1].display_name)}</span><small>${pct(t.w[1] || 0)} % Siegquote</small></div>`;
         $('rateBar').innerHTML = t.n ? `<div class="r0" style="width:${100 * (t.w[0] || 0) / t.n}%"></div><div class="rd" style="width:${100 * t.draw / t.n}%"></div><div class="r1" style="width:${100 * (t.w[1] || 0) / t.n}%"></div>` : '';
         const diff = (t.w[0] || 0) - (t.w[1] || 0);
-        $('leader').innerHTML = !t.n ? 'Noch keine Matches – leg los mit „＋ Match“.'
-            : diff === 0 ? 'Gleichstand! 🤝'
+        $('leader').innerHTML = !t.n ? 'Noch keine Matches – leg los mit „Match“.'
+            : diff === 0 ? 'Gleichstand'
             : `<span class="c${diff > 0 ? 0 : 1}">${esc(P[diff > 0 ? 0 : 1].display_name)}</span> führt mit ${Math.abs(diff)} ${Math.abs(diff) === 1 ? 'Sieg' : 'Siegen'} Vorsprung`;
 
         /* Serien: aktuelle (vom neuesten Match rückwärts) und längste je Spieler */
@@ -266,9 +310,9 @@
         ].join('');
 
         /* Aufteilung je Kategorie und je Spiel */
-        const splitRows = groups => groups.map(([name, list]) => {
+        const splitRows = groups => groups.map(([name, list, title]) => {
             const g = tally(list);
-            return `<div class="split"><span class="name" title="${esc(name)}">${name}</span>
+            return `<div class="split"><span class="name" title="${esc(title)}">${name}</span>
                 <div class="bar"><div style="width:${100 * (g.w[0] || 0) / g.n}%;background:var(--stefan)"></div><div style="width:${100 * g.draw / g.n}%;background:var(--draw);opacity:.45"></div><div style="width:${100 * (g.w[1] || 0) / g.n}%;background:var(--ines)"></div></div>
                 <span class="nums"><span class="c0">${g.w[0] || 0}</span> : <span class="c1">${g.w[1] || 0}</span>${g.draw ? ` <span class="cd">(${g.draw})</span>` : ''}</span></div>`;
         }).join('') || '<div class="empty">Noch nichts eingetragen.</div>';
@@ -277,8 +321,8 @@
             D.matches.forEach(x => { const k = key(x); if (!m.has(k)) m.set(k, []); m.get(k).push(x); });
             return [...m.entries()].sort((a, b) => b[1].length - a[1].length);
         };
-        $('byCategory').innerHTML = splitRows(D.categories.map(c => [`${c.emoji} ${esc(c.label)}`, D.matches.filter(m => m.category_id === c.id)]).filter(([, l]) => l.length).sort((a, b) => b[1].length - a[1].length));
-        $('byGame').innerHTML = splitRows(group(m => m.game).slice(0, 10).map(([k, l]) => [esc(k), l]));
+        $('byCategory').innerHTML = splitRows(D.categories.map(c => [`${catIcon(c)}<span>${esc(c.label)}</span>`, D.matches.filter(m => m.category_id === c.id), c.label]).filter(([, l]) => l.length).sort((a, b) => b[1].length - a[1].length));
+        $('byGame').innerHTML = splitRows(group(m => m.game).slice(0, 10).map(([k, l]) => [`<span>${esc(k)}</span>`, l, k]));
 
         $('recent').innerHTML = D.matches.slice(0, 5).map(entryHtml).join('') || '<div class="empty">Noch keine Matches.</div>';
         renderMap();
@@ -303,9 +347,9 @@
             const color = d > 0 ? 'var(--stefan)' : d < 0 ? 'var(--ines)' : 'var(--draw)';
             const size = 24 + Math.min(list.length, 6) * 3;
             const icon = L.divIcon({ className: '', html: `<span class="pin" style="background:${color}">${list.length}</span>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
-            const popup = `<b>📍 ${esc(l.name)}</b>${l.region ? `<br><small>${esc(l.region)}</small>` : ''}
-                <br><small><span class="c0">${t.w[0] || 0}</span> : <span class="c1">${t.w[1] || 0}</span>${t.draw ? ` · ${t.draw} × 🤝` : ''}</small>
-                <ul>${[...list].sort(byTime).map(m => `<li>${cat(m.category_id).emoji} ${esc(m.title)} · ${fmtDate(m.played_on, { day: '2-digit', month: '2-digit' })} · <b class="c${m.winner_id ? pIdx(m.winner_id) : 'd'}">${m.winner_id ? esc(pName(m.winner_id)) : '🤝'}</b></li>`).join('')}</ul>`;
+            const popup = `<b>${esc(l.name)}</b>${l.region ? `<br><small>${esc(l.region)}</small>` : ''}
+                <br><small><span class="c0">${t.w[0] || 0}</span> : <span class="c1">${t.w[1] || 0}</span>${t.draw ? ` · ${t.draw} × unentschieden` : ''}</small>
+                <ul>${[...list].sort(byTime).map(m => `<li>${catIcon(cat(m.category_id))} ${esc(m.title)} · ${fmtDate(m.played_on, { day: '2-digit', month: '2-digit' })} · <b class="c${m.winner_id ? pIdx(m.winner_id) : 'd'}">${m.winner_id ? esc(pName(m.winner_id)) : '='}</b></li>`).join('')}</ul>`;
             L.marker([l.lat, l.lng], { icon, title: l.name }).bindPopup(popup).addTo(layer);
             pts.push([l.lat, l.lng]);
         });
@@ -323,18 +367,18 @@
     /* ───────── Log ───────── */
     function entryHtml(m) {
         const c = cat(m.category_id), l = loc(m.location_id);
-        const meta = [fmtDate(m.played_on), l && '📍 ' + esc(l.name), m.game !== m.title && esc(m.game), m.score && esc(m.score),
-            m.guests && m.guests.length && '👥 mit ' + esc(m.guests.join(', '))].filter(Boolean).join(' · ');
+        const meta = [fmtDate(m.played_on), l && ic('pin') + esc(l.name), m.game !== m.title && esc(m.game), m.score && esc(m.score),
+            m.guests && m.guests.length && ic('people') + 'mit ' + esc(m.guests.join(', '))].filter(Boolean).join(' · ');
         return `<div class="entry" data-id="${esc(m.id)}" role="button" tabindex="0" aria-label="${esc(m.title)} bearbeiten">
-            <span class="emo" style="color:${esc(c.color)}" title="${esc(c.label)}">${c.emoji}</span>
-            <div><div class="t">${esc(m.title)}</div><div class="meta">${meta}</div>${m.notes ? `<div class="meta">📝 ${esc(m.notes)}</div>` : ''}</div>
-            <span class="chip ${winClass(m)}">${esc(winLabel(m))}</span></div>`;
+            ${catIcon(c, 'emo cat-ic')}
+            <div><div class="t">${esc(m.title)}</div><div class="meta">${meta}</div>${m.notes ? `<div class="meta">${ic('note')}${esc(m.notes)}</div>` : ''}</div>
+            <span class="chip ${winClass(m)}">${ic(m.winner_id ? 'trophy' : 'equal')}${esc(winLabel(m))}</span></div>`;
     }
 
     function fillFilters() {
         const keep = id => $(id).value;
         const opts = (id, list, all) => { const v = keep(id); $(id).innerHTML = `<option value="">${all}</option>` + list.map(([k, t]) => `<option value="${esc(k)}">${esc(t)}</option>`).join(''); $(id).value = list.some(([k]) => k === v) ? v : ''; };
-        opts('fCat', D.categories.map(c => [c.id, `${c.emoji} ${c.label}`]), 'Alle');
+        opts('fCat', D.categories.map(c => [c.id, c.label]), 'Alle');
         opts('fWin', [...D.players.map(p => [p.id, p.display_name]), ['draw', 'Unentschieden']], 'Alle');
         opts('fLoc', D.locations.filter(l => D.matches.some(m => m.location_id === l.id)).map(l => [l.id, l.name]), 'Alle');
         opts('fYear', [...new Set(D.matches.map(m => m.played_on.slice(0, 4)))].sort().reverse().map(y => [y, y]), 'Alle');
@@ -355,7 +399,7 @@
             return true;
         });
         const t = tally(list);
-        $('fCount').innerHTML = `${list.length} von ${D.matches.length} Matches${list.length ? ` · <span class="c0">${t.w[0] || 0}</span> : <span class="c1">${t.w[1] || 0}</span>${t.draw ? ` · ${t.draw} × 🤝` : ''}` : ''}`;
+        $('fCount').innerHTML = `${list.length} von ${D.matches.length} Matches${list.length ? ` · <span class="c0">${t.w[0] || 0}</span> : <span class="c1">${t.w[1] || 0}</span>${t.draw ? ` · ${t.draw} × unentschieden` : ''}` : ''}`;
         let html = '', lastDay = null;
         list.forEach(m => {
             if (m.played_on !== lastDay) { html += `<div class="day">${fmtDate(m.played_on, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>`; lastDay = m.played_on; }
@@ -375,12 +419,12 @@
         if (D.offline) { msg($('appMsg'), 'Offline kann nichts gespeichert werden.'); return; }
         editing = m || null;
         $('dlgTitle').textContent = m ? 'Match bearbeiten' : 'Neues Match';
-        $('mCat').innerHTML = D.categories.map(c => `<option value="${esc(c.id)}">${c.emoji} ${esc(c.label)}</option>`).join('');
+        $('mCat').innerHTML = D.categories.map(c => `<option value="${esc(c.id)}">${esc(c.label)}</option>`).join('');
         $('gameList').innerHTML = [...new Set(D.matches.map(x => x.game))].sort().map(g => `<option value="${esc(g)}">`).join('');
-        $('mWinner').innerHTML = D.players.map((p, i) => `<label class="s${i}"><input type="radio" name="winner" value="${esc(p.id)}" required><span class="seg-ico">🏆</span><span class="seg-txt">${esc(p.display_name)}</span></label>`).join('')
-            + '<label><input type="radio" name="winner" value=""><span class="seg-ico">🤝</span><span class="seg-txt">Unentschieden</span></label>';
+        $('mWinner').innerHTML = D.players.map((p, i) => `<label class="s${i}"><input type="radio" name="winner" value="${esc(p.id)}" required><span class="seg-ico">${ic('trophy')}</span><span class="seg-txt">${esc(p.display_name)}</span></label>`).join('')
+            + `<label><input type="radio" name="winner" value=""><span class="seg-ico">${ic('equal')}</span><span class="seg-txt">Unentschieden</span></label>`;
         $('mLoc').innerHTML = '<option value="">– ohne Ort –</option>' + [...D.locations].sort((a, b) => a.name.localeCompare(b.name, 'de'))
-            .map(l => `<option value="${esc(l.id)}">${esc(l.name)}${l.region ? ' · ' + esc(l.region) : ''}</option>`).join('') + '<option value="__new">➕ Neuer Ort …</option>';
+            .map(l => `<option value="${esc(l.id)}">${esc(l.name)}${l.region ? ' · ' + esc(l.region) : ''}</option>`).join('') + '<option value="__new">Neuer Ort …</option>';
         $('mTitle').value = m ? m.title : '';
         $('mGame').value = m ? m.game : '';
         $('mCat').value = m ? m.category_id : 'sport';
@@ -424,7 +468,7 @@
     function setPick(lat, lng) {
         pickPos = { lat: +lat.toFixed(5), lng: +lng.toFixed(5) };
         if (pickMarker) pickMarker.setLatLng([lat, lng]); else pickMarker = L.marker([lat, lng]).addTo(pickMap);
-        $('lCoords').textContent = `📍 ${pickPos.lat}, ${pickPos.lng}`;
+        $('lCoords').textContent = `Gesetzt: ${pickPos.lat}, ${pickPos.lng}`;
     }
     function initPickMap() {
         pickPos = null;
@@ -566,7 +610,7 @@
         if (!D) return;
         const myUrl = D.me.avatar_path && photos[D.me.avatar_path];
         $('meBtn').classList.toggle('has-photo', !!myUrl);
-        $('meBtn').innerHTML = myUrl ? `<img src="${esc(myUrl)}" alt="">` : '👤';
+        $('meBtn').innerHTML = myUrl ? `<img src="${esc(myUrl)}" alt="">` : ic('person');
         $('menuAva').innerHTML = avaHtml(D.me.display_name || D.me.email, D.me.avatar_path);
         document.querySelectorAll('[data-ava]').forEach(el => {
             const p = player(el.dataset.ava), i = pIdx(el.dataset.ava);
@@ -581,7 +625,7 @@
     }
     function setLoggedInOff() {
         show($('mainNav'), false); show($('addBtn'), false); show($('meBtn'), false); show($('menuAdmin'), false); show($('offlineHint'), false); show($('headSub'), false);
-        $('meBtn').classList.remove('has-photo'); $('meBtn').innerHTML = '👤';
+        $('meBtn').classList.remove('has-photo'); $('meBtn').innerHTML = ic('person');
         onlyView('viewLoggedOut');
     }
 
