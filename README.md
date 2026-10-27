@@ -10,7 +10,7 @@ Ohne Anmeldung zeigt die Seite nur das Login-Formular.
 
 ```
 index.html               Login, Dashboard (Punktestand, Statistiken, Karte), Log mit Filtern, Dialog „＋ Match“
-shared/style.css         Aussehen (gleiche Variablen und Bausteine wie Quest Log, Hell/Dunkel)
+shared/style.css         Aussehen (Apple-Designsprache wie Zuhause, Systemschrift, Hell/Dunkel)
 shared/config.js         Supabase-URL + Publishable Key (dürfen öffentlich sein)
 shared/matchboard.js     Login, Daten laden/speichern, Offline-Zwischenspeicher, Profilbilder
 sw.js, manifest.json     App zum Installieren + Offline-Modus
