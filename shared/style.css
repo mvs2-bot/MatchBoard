@@ -1,10 +1,10 @@
 /* MatchBoard – Apple-Designsprache wie Zuhause, DailyMind und das mvs2-Dashboard:
    Systemschrift, gruppierte Karten auf grauem Grund, Linien-Symbole, iOS-Bedienelemente.
-   Akzent Violett (eigene Farbe dieser App); Stefan Blau, Ines Dunkelgrün, Unentschieden Grau. Dunkel: graue Karten auf Schwarz. */
+   Akzent Dunkelblau wie das App-Icon; Stefan Blau, Ines Dunkelgrün, Unentschieden Grau. Dunkel: graue Karten auf Schwarz. */
 :root {
     --bg: #f2f2f7; --card: #fff; --well: #f2f2f7; --hover: #e9e9ef; --line: #e2e2e7; --sep: rgba(60, 60, 67, .14);
     --ink: #1c1c1e; --text: #3a3a3c; --mute: #6c6c70;
-    --p1: #8944ab; --p1-soft: #f4ebf9; --p1-line: #dcc3ea; --on-p1: #fff;
+    --p1: #1e3a8a; --p1-soft: #e6ebf7; --p1-line: #c3cfeb; --on-p1: #fff;
     --ok: #248a3d; --ok-soft: #e4f5e9; --danger: #d70015; --danger-soft: #ffe6e8;
     --stefan: #0066cc; --stefan-soft: #e6f0fb; --ines: #1e6b45; --ines-soft: #e3f1e9; --draw: #8e8e93; --draw-soft: #ececf0;
     --radius: 18px; --radius-s: 12px; --shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 4px 14px rgba(0, 0, 0, .04);
@@ -14,7 +14,7 @@
 :root[data-theme="dark"] {
     color-scheme: dark; --bg: #000; --card: #1c1c1e; --well: #2c2c2e; --hover: #3a3a3c; --line: #38383a; --sep: rgba(84, 84, 88, .55);
     --ink: #f5f5f7; --text: #d1d1d6; --mute: #98989f;
-    --p1: #c77dff; --p1-soft: #2b1838; --p1-line: #5e3a78; --on-p1: #1d0a29;
+    --p1: #7d9cf0; --p1-soft: #141d38; --p1-line: #2f437a; --on-p1: #0a1330;
     --ok: #30d158; --ok-soft: #0f2a17; --danger: #ff6961; --danger-soft: #3a1412;
     --stefan: #409cff; --stefan-soft: #0d2440; --ines: #4cbb84; --ines-soft: #10301f; --draw: #8e8e93; --draw-soft: #2c2c2e;
     --shadow: none;

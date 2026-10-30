@@ -2,7 +2,7 @@
    - Eigene Dateien: erst Netz (max. 4 s), sonst gespeicherte Version → Updates kommen sofort an
    - Bibliotheken: aus dem Speicher (Schrift ist die Systemschrift)
    - Supabase-Anfragen werden NICHT gespeichert (die App merkt sich die Matches selbst, pro Benutzer) */
-const P="matchboard-",V=P+"v4";
+const P="matchboard-",V=P+"v5";
 const CORE=['./','index.html','shared/ios-nav.js','manifest.json','shared/style.css','shared/config.js','shared/matchboard.js','icon.svg','apple-touch-icon.png','icons/icon-192.png','icons/icon-512.png','icons/icon-maskable-512.png','icons/favicon-32.png'];
 const EXTRA=["https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js","https://unpkg.com/leaflet@1.9.4/dist/leaflet.js","https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"];
 const CDN=/fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.jsdelivr\.net|unpkg\.com/;
