@@ -40,8 +40,7 @@ button { cursor: pointer; }
     background: color-mix(in srgb, var(--bg) 82%, transparent); -webkit-backdrop-filter: saturate(1.8) blur(18px); backdrop-filter: saturate(1.8) blur(18px);
     display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.brand-ic { width: 36px; height: 36px; flex: none; border-radius: 9px; display: grid; place-items: center; background: linear-gradient(160deg, #a35bc8, #6e2f96); color: #fff; }
-.brand-ic .ic { width: 20px; height: 20px; }
+.brand-ic { width: 36px; height: 36px; flex: none; border-radius: 9px; display: block; }
 h1 { font-size: 22px; font-weight: 700; letter-spacing: -.02em; color: var(--ink); line-height: 1.15; }
 .sub { font-size: 12px; font-weight: 500; color: var(--mute); }
 .header-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
