@@ -72,13 +72,18 @@
         <div class="header-actions">
             <button id="themeToggle" class="icon-btn" type="button" aria-label="Zum dunklen Modus wechseln"><svg class="ic" aria-hidden="true"><use href="#i-moon"/></svg></button>
             <div class="me-wrap">
-                <button id="meBtn" class="icon-btn me-btn" type="button" aria-label="Mein Konto" aria-haspopup="menu" aria-expanded="false" aria-controls="meMenu" hidden><svg class="ic" aria-hidden="true"><use href="#i-person"/></svg></button>
-                <div id="meMenu" class="me-menu" role="menu" hidden>
-                    <div class="me-head"><span id="menuAva" class="ava"></span><div><b id="menuName"></b></div></div>
-                    <a class="me-item" href="/" role="menuitem"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg>Dashboard</a>
-                    <a id="menuKonto" class="me-item" href="/konto.html?from=matchboard#app-matchboard" role="menuitem"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg>Kontoeinstellungen</a>
-                    <a id="menuAdmin" class="me-item" href="/admin.html?from=matchboard#app-matchboard" role="menuitem" hidden><svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>Admin-Einstellungen</a>
-                    <button id="logoutBtn" class="me-item danger" type="button" role="menuitem"><svg class="ic" aria-hidden="true"><use href="#i-logout"/></svg>Abmelden</button>
+                <button id="meBtn" class="icon-btn me-btn" type="button" aria-label="Mein Konto" title="Mein Konto" aria-haspopup="menu" aria-expanded="false" aria-controls="meMenu" hidden><svg class="ic" aria-hidden="true"><use href="#i-person"/></svg></button>
+                <div id="meMenu" class="pm-menu" role="menu" hidden>
+                    <div class="pm-head">
+                        <span id="menuAva" class="pm-ava"></span>
+                        <div><b id="menuName"></b><small id="menuMail"></small><span id="menuRole" class="pm-role" hidden></span></div>
+                    </div>
+                    <div id="menuSync" class="pm-sync" role="status"><i></i><span><b>Cloud-Sync</b> · <span></span></span></div>
+                    <a class="pm-item" href="/" role="menuitem"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg>Dashboard</a>
+                    <a id="menuKonto" class="pm-item" href="/konto.html?from=matchboard#app-matchboard" role="menuitem"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg>Kontoeinstellungen</a>
+                    <a id="menuAdmin" class="pm-item" href="/admin.html?from=matchboard#app-matchboard" role="menuitem" hidden><svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>Admin-Einstellungen<small>nur Admins</small></a>
+                    <div class="pm-sep"></div>
+                    <button id="logoutBtn" class="pm-item danger" type="button" role="menuitem"><svg class="ic" aria-hidden="true"><use href="#i-logout"/></svg>Abmelden</button>
                 </div>
             </div>
         </div>
@@ -543,6 +548,7 @@
                 guests: $('mGuests').value.split(',').map(s => s.trim()).filter(Boolean), notes: $('mNotes').value.trim()
             });
             D.matches = D.matches.filter(m => m.id !== saved.id).concat(saved).sort((a, b) => byTime(b, a));
+            syncOk();
             $('matchDlg').close();
             renderAll();
         } catch (err) {
@@ -554,6 +560,7 @@
         try {
             await MB.deleteMatch(editing.id);
             D.matches = D.matches.filter(m => m.id !== editing.id);
+            syncOk();
             $('matchDlg').close();
             renderAll();
         } catch (err) { msg($('matchMsg'), MB.errorText(err)); }
@@ -594,6 +601,11 @@
         if (!D) { setLoggedInOff(); return; }
         D.matches.sort((a, b) => byTime(b, a));
         $('menuName').textContent = D.me.display_name || D.me.email;
+        $('menuMail').textContent = D.me.email || '';
+        $('menuRole').textContent = ROLE_LABELS[D.me.role] || D.me.role || '';
+        show($('menuRole'), !!D.me.role);
+        if (!D.offline) SYNC.last = new Date();
+        SYNC.err = false;
         show($('menuAdmin'), D.me.role === 'admin');   /* wie im Quest Log: Admin-Einstellungen nur für Admins */
         $('headSub').textContent = D.players.map(p => p.display_name).join(' vs. ') || 'Stefan vs. Ines';
         setLoggedIn(true);
@@ -613,7 +625,9 @@
         const myUrl = D.me.avatar_path && photos[D.me.avatar_path];
         $('meBtn').classList.toggle('has-photo', !!myUrl);
         $('meBtn').innerHTML = myUrl ? `<img src="${esc(myUrl)}" alt="">` : ic('person');
-        $('menuAva').innerHTML = avaHtml(D.me.display_name || D.me.email, D.me.avatar_path);
+        const myN = D.me.display_name || D.me.email || '';
+        let h = 0; for (const c of myN) h = (h * 31 + c.codePointAt(0)) >>> 0;
+        $('menuAva').innerHTML = avaHtml(myN, D.me.avatar_path, AVATAR_COLORS[h % AVATAR_COLORS.length]);
         document.querySelectorAll('[data-ava]').forEach(el => {
             const p = player(el.dataset.ava), i = pIdx(el.dataset.ava);
             el.innerHTML = avaHtml(p && p.display_name, p && p.avatar_path, `var(--${i ? 'ines' : 'stefan'})`);
@@ -653,9 +667,29 @@
     MB.onAuth(ev => { if (ev === 'PASSWORD_RECOVERY') onlyView('viewRecovery'); });
 
 
+    /* ───────── Kontomenü (einheitlich in allen Apps, Vorlage: JobTracker) ───────── */
+    const ROLE_LABELS = { admin: 'Admin', member: 'Mitglied', guest: 'Gast' };
+    const AVATAR_COLORS = ['#0b6e79', '#4a7356', '#b25000', '#5856d6', '#0066cc', '#a2453a'];
+    const SYNC = { last: null, err: false };
+    function paintSync() {
+        const box = $('menuSync'), off = !navigator.onLine || (D && D.offline);
+        box.querySelector('i').className = off ? 'pending' : SYNC.err ? 'error' : '';
+        box.querySelector('span span').textContent = off ? 'Offline · zuletzt geladener Stand'
+            : SYNC.err ? 'Speichern fehlgeschlagen'
+            : SYNC.last ? 'Verbunden · zuletzt ' + SYNC.last.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : 'Verbunden';
+    }
+    const syncOk = () => { SYNC.last = new Date(); SYNC.err = false; };
     const menu = $('meMenu');
-    $('meBtn').onclick = e => { e.stopPropagation(); const open = menu.hidden; show(menu, open); $('meBtn').setAttribute('aria-expanded', open); };
-    document.addEventListener('click', e => { if (!menu.hidden && !menu.contains(e.target)) { show(menu, false); $('meBtn').setAttribute('aria-expanded', false); } });
+    const closeMenu = () => { show(menu, false); $('meBtn').setAttribute('aria-expanded', false); };
+    $('meBtn').onclick = e => {
+        e.stopPropagation();
+        if (!menu.hidden) return closeMenu();
+        paintSync(); show(menu, true); $('meBtn').setAttribute('aria-expanded', true);
+        const first = menu.querySelector('.pm-item:not([hidden])'); if (first) first.focus();
+    };
+    menu.addEventListener('click', e => { if (e.target.closest('.pm-item')) closeMenu(); });
+    document.addEventListener('click', e => { if (!menu.hidden && !menu.contains(e.target)) closeMenu(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) { closeMenu(); $('meBtn').focus(); } });
     $('logoutBtn').onclick = async () => { show(menu, false); await MB.signOut(); D = null; setLoggedInOff(); };
 
     boot();
