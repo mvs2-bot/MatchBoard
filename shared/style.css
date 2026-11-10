@@ -311,3 +311,4 @@ legend { font-size: 12px; font-weight: 500; color: var(--mute); margin-bottom: 5
     body.adding .new-card { outline: 1.5px solid color-mix(in srgb, var(--p1) 55%, transparent); outline-offset: -1.5px; }
 }
 .prof .box { margin-bottom: 0; }
+#viewKarte #map { height: max(320px, calc(100dvh - 300px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))); }

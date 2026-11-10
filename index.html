@@ -147,7 +147,7 @@
         <div class="box">
             <div class="stats" id="stats"></div>
         </div>
-        <div class="box">
+        <div class="box" id="mapBox">
             <h2><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg>Wo wurde gespielt?</h2>
             <div id="map" role="region" aria-label="Karte der Matches"></div>
             <div class="legend-row" id="mapLegend"></div>
@@ -184,6 +184,9 @@
         <div class="box new-card" id="newHost"></div>
     </section>
 
+    <!-- Karte als eigene Seite (nur Handy, über „Karte“ in der Leiste; am Desktop bleibt sie im Dashboard) -->
+    <section id="viewKarte" hidden></section>
+
     <!-- Profil (nur Handy, über „Profil“ in der Leiste) -->
     <section id="viewProfil" hidden>
         <div class="prof" id="profHost">
@@ -200,6 +203,7 @@
     <a href="#dashboard" data-tab="dashboard"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg>Dashboard</a>
     <a href="#log" data-tab="log"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg>Log</a>
     <a href="#neu" data-tab="neu" class="new" id="barAdd" aria-label="Neues Match"><span class="fab"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></span></a>
+    <a href="#karte" data-tab="karte"><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg>Karte</a>
     <a href="#profil" data-tab="profil"><span class="pm-ava bar-ava" id="barAva"></span>Profil</a>
 </nav>
 
@@ -608,7 +612,7 @@
     $('toLog').onclick = () => { location.hash = '#log'; };
 
     /* ───────── Bereiche & Anmeldung ───────── */
-    const VIEWS = ['viewLoggedOut', 'viewRecovery', 'viewDashboard', 'viewLog', 'viewNew', 'viewProfil'];
+    const VIEWS = ['viewLoggedOut', 'viewRecovery', 'viewDashboard', 'viewLog', 'viewNew', 'viewKarte', 'viewProfil'];
     function onlyView(id) { VIEWS.forEach(v => show($(v), v === id)); }
     const MQ = matchMedia('(max-width: 767.98px)');
     const isMobile = () => MQ.matches;
@@ -617,8 +621,8 @@
     /* Seite aus dem Hash; „Neues Match“ und „Profil“ gibt es nur am Handy, am Desktop öffnet dann das Dashboard */
     function curTab() {
         let t = location.hash.slice(1);
-        if (!['log', 'neu', 'profil'].includes(t)) t = 'dashboard';
-        if (!isMobile() && (t === 'neu' || t === 'profil')) t = 'dashboard';
+        if (!['log', 'neu', 'karte', 'profil'].includes(t)) t = 'dashboard';
+        if (!isMobile() && (t === 'neu' || t === 'karte' || t === 'profil')) t = 'dashboard';
         if (t === 'neu' && D.offline) t = 'dashboard';
         return t;
     }
@@ -629,10 +633,14 @@
         document.querySelectorAll('#mainNav a').forEach(a => a.classList.toggle('on', a.dataset.tab === tab));
         document.querySelectorAll('#tabBar a').forEach(a => { if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
         document.body.classList.toggle('adding', tab === 'neu');
-        onlyView({ log: 'viewLog', neu: 'viewNew', profil: 'viewProfil' }[tab] || 'viewDashboard');
+        onlyView({ log: 'viewLog', neu: 'viewNew', karte: 'viewKarte', profil: 'viewProfil' }[tab] || 'viewDashboard');
+        /* Karte: am Handy auf eigener Seite, am Desktop wie bisher im Dashboard nach dem Statistik-Kasten */
+        if (isMobile()) { if ($('mapBox').parentElement !== $('viewKarte')) $('viewKarte').append($('mapBox')); }
+        else if ($('mapBox').parentElement !== $('viewDashboard')) $('stats').closest('.box').after($('mapBox'));
         if (tab === 'neu') { if (!formInPage) openMatch(null); } else formHome();
         placeMenu(tab === 'profil');
         if (tab === 'log') renderLog(); else if (tab === 'profil') renderProfil(); else if (tab !== 'neu') renderDashboard();
+        if (tab === 'karte' && map) setTimeout(() => map.invalidateSize(), 0);
     }
     window.addEventListener('hashchange', () => { if (D) { renderAll(); window.scrollTo(0, 0); } });
     MQ.addEventListener('change', () => { if (D) renderAll(); });
