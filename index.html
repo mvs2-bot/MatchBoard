@@ -20,7 +20,7 @@
     <script src="shared/config.js"></script>
     <script src="shared/matchboard.js"></script>
     <link rel="stylesheet" href="shared/style.css">
-<script src="shared/ios-nav.js" defer></script>
+<script src="shared/ios-nav.js" data-bottom="84" defer></script>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -71,7 +71,7 @@
         </div>
         <div class="header-actions">
             <button id="themeToggle" class="icon-btn" type="button" aria-label="Zum dunklen Modus wechseln"><svg class="ic" aria-hidden="true"><use href="#i-moon"/></svg></button>
-            <div class="me-wrap">
+            <div class="me-wrap" id="meWrap">
                 <button id="meBtn" class="icon-btn me-btn" type="button" aria-label="Mein Konto" title="Mein Konto" aria-haspopup="menu" aria-expanded="false" aria-controls="meMenu" hidden><svg class="ic" aria-hidden="true"><use href="#i-person"/></svg></button>
                 <div id="meMenu" class="pm-menu" role="menu" hidden>
                     <div class="pm-head">
@@ -79,6 +79,9 @@
                         <div><b id="menuName"></b><small id="menuMail"></small><span id="menuRole" class="pm-role" hidden></span></div>
                     </div>
                     <div id="menuSync" class="pm-sync" role="status"><i></i><span><b>Cloud-Sync</b> · <span></span></span></div>
+                    <div class="pm-theme"><svg class="ic" aria-hidden="true"><use href="#i-moon"/></svg>Darstellung
+                        <div class="seg seg2" id="themeSeg" role="radiogroup" aria-label="Darstellung"><label><input type="radio" name="theme" value="light"><span class="seg-txt">Hell</span></label><label><input type="radio" name="theme" value="dark"><span class="seg-txt">Dunkel</span></label></div>
+                    </div>
                     <a class="pm-item" href="/" role="menuitem"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg>Dashboard</a>
                     <a id="menuKonto" class="pm-item" href="/konto.html?from=matchboard#app-matchboard" role="menuitem"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg>Kontoeinstellungen</a>
                     <a id="menuAdmin" class="pm-item" href="/admin.html?from=matchboard#app-matchboard" role="menuitem" hidden><svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>Admin-Einstellungen<small>nur Admins</small></a>
@@ -174,12 +177,36 @@
         </div>
         <div id="logList"></div>
     </section>
+
+    <!-- Neues Match als eigene Seite (nur Handy, über „+“ in der Leiste) -->
+    <section id="viewNew" hidden>
+        <div class="new-head"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Neues Match</div>
+        <div class="box new-card" id="newHost"></div>
+    </section>
+
+    <!-- Profil (nur Handy, über „Profil“ in der Leiste) -->
+    <section id="viewProfil" hidden>
+        <div class="prof" id="profHost">
+            <div class="box">
+                <h2><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg><span id="monthTitle">Diesen Monat</span></h2>
+                <div class="stats" id="monthStats"></div>
+            </div>
+        </div>
+    </section>
 </div>
+
+<!-- Untere Tab-Leiste: nur am Handy (< 768 px), siehe style.css -->
+<nav class="tabbar" id="tabBar" aria-label="Navigation" hidden>
+    <a href="#dashboard" data-tab="dashboard"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg>Dashboard</a>
+    <a href="#log" data-tab="log"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg>Log</a>
+    <a href="#neu" data-tab="neu" class="new" id="barAdd" aria-label="Neues Match"><span class="fab"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></span></a>
+    <a href="#profil" data-tab="profil"><span class="pm-ava bar-ava" id="barAva"></span>Profil</a>
+</nav>
 
 <!-- Match erfassen / bearbeiten -->
 <dialog id="matchDlg" aria-labelledby="dlgTitle">
     <div class="dlg-head"><h2 id="dlgTitle">Neues Match</h2><button class="icon-btn" type="button" id="dlgClose" aria-label="Schließen"><svg class="ic" aria-hidden="true"><use href="#i-xmark"/></svg></button></div>
-    <div class="dlg-body">
+    <div class="dlg-body" id="dlgBody">
         <form id="matchForm">
             <div class="grid2">
                 <label>Titel<input type="text" id="mTitle" maxlength="120" required placeholder="z. B. Kniffel Italien"></label>
@@ -251,6 +278,7 @@
         $('themeToggle').innerHTML = ic(dark ? 'sun' : 'moon');
         document.querySelector('meta[name="theme-color"]').content = dark ? '#000000' : '#f2f2f7';
         $('themeToggle').setAttribute('aria-label', dark ? 'Zum hellen Modus wechseln' : 'Zum dunklen Modus wechseln');
+        document.querySelectorAll('#themeSeg input').forEach(r => { r.checked = r.value === (dark ? 'dark' : 'light'); });
     }
     applyTheme(document.documentElement.getAttribute('data-theme') === 'dark');
     $('themeToggle').onclick = () => {
@@ -258,6 +286,10 @@
         try { localStorage.setItem('overall-theme', dark ? 'dark' : 'light'); } catch (e) {}
         applyTheme(dark);
     };
+    document.querySelectorAll('#themeSeg input').forEach(r => r.addEventListener('change', () => {
+        try { localStorage.setItem('overall-theme', r.value); } catch (e) {}
+        applyTheme(r.value === 'dark');
+    }));
 
     /* ───────── Hilfen rund um Spieler, Kategorien, Orte ───────── */
     const player = id => D.players.find(p => p.id === id);
@@ -448,8 +480,13 @@
         show($('mDelete'), !!canDelete);
         show($('newLoc'), false);
         show($('matchMsg'), false);
-        $('matchDlg').showModal();
+        if (!m && isMobile()) { $('newHost').append($('matchForm')); formInPage = true; }
+        else { formHome(); $('matchDlg').showModal(); }
     }
+    /* Formular zurück in den Dialog (Bearbeiten und Desktop nutzen weiter das Blatt) */
+    function formHome() { if (formInPage) { $('dlgBody').append($('matchForm')); formInPage = false; } }
+    /* Nach dem Speichern auf der Seite „Neues Match“ zurück zur vorherigen Seite */
+    function leaveNew() { if (formInPage) location.hash = '#' + lastTab; }
 
     /* Titel → Spiel vorschlagen ("Kickern Italien" → "Kickern"), solange Spiel leer ist */
     $('mTitle').addEventListener('change', () => {
@@ -550,6 +587,7 @@
             D.matches = D.matches.filter(m => m.id !== saved.id).concat(saved).sort((a, b) => byTime(b, a));
             syncOk();
             $('matchDlg').close();
+            leaveNew();
             renderAll();
         } catch (err) {
             msg($('matchMsg'), MB.errorText(err));
@@ -562,6 +600,7 @@
             D.matches = D.matches.filter(m => m.id !== editing.id);
             syncOk();
             $('matchDlg').close();
+            leaveNew();
             renderAll();
         } catch (err) { msg($('matchMsg'), MB.errorText(err)); }
     };
@@ -569,21 +608,58 @@
     $('toLog').onclick = () => { location.hash = '#log'; };
 
     /* ───────── Bereiche & Anmeldung ───────── */
-    const VIEWS = ['viewLoggedOut', 'viewRecovery', 'viewDashboard', 'viewLog'];
+    const VIEWS = ['viewLoggedOut', 'viewRecovery', 'viewDashboard', 'viewLog', 'viewNew', 'viewProfil'];
     function onlyView(id) { VIEWS.forEach(v => show($(v), v === id)); }
+    const MQ = matchMedia('(max-width: 767.98px)');
+    const isMobile = () => MQ.matches;
+    let formInPage = false, lastTab = 'dashboard';
 
+    /* Seite aus dem Hash; „Neues Match“ und „Profil“ gibt es nur am Handy, am Desktop öffnet dann das Dashboard */
+    function curTab() {
+        let t = location.hash.slice(1);
+        if (!['log', 'neu', 'profil'].includes(t)) t = 'dashboard';
+        if (!isMobile() && (t === 'neu' || t === 'profil')) t = 'dashboard';
+        if (t === 'neu' && D.offline) t = 'dashboard';
+        return t;
+    }
     function renderAll() {
         fillFilters();
-        const tab = location.hash === '#log' ? 'log' : 'dashboard';
+        const tab = curTab();
+        if (tab === 'dashboard' || tab === 'log') lastTab = tab;
         document.querySelectorAll('#mainNav a').forEach(a => a.classList.toggle('on', a.dataset.tab === tab));
-        onlyView(tab === 'log' ? 'viewLog' : 'viewDashboard');
-        if (tab === 'log') renderLog(); else renderDashboard();
+        document.querySelectorAll('#tabBar a').forEach(a => { if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+        document.body.classList.toggle('adding', tab === 'neu');
+        onlyView({ log: 'viewLog', neu: 'viewNew', profil: 'viewProfil' }[tab] || 'viewDashboard');
+        if (tab === 'neu') { if (!formInPage) openMatch(null); } else formHome();
+        placeMenu(tab === 'profil');
+        if (tab === 'log') renderLog(); else if (tab === 'profil') renderProfil(); else if (tab !== 'neu') renderDashboard();
     }
-    window.addEventListener('hashchange', () => { if (D) renderAll(); });
+    window.addEventListener('hashchange', () => { if (D) { renderAll(); window.scrollTo(0, 0); } });
+    MQ.addEventListener('change', () => { if (D) renderAll(); });
+
+    /* ───────── Profil-Seite (nur Handy) ───────── */
+    function renderProfil() {
+        const list = D.matches.filter(m => m.played_on.startsWith(MB.today().slice(0, 7))), t = tally(list);
+        $('monthTitle').textContent = new Date().toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+        const tile = (v, l) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`;
+        $('monthStats').innerHTML = [
+            tile(t.n, 'Matches'),
+            ...D.players.map((p, i) => tile(`<span class="c${i}">${t.w[i] || 0}</span>`, 'Siege ' + esc(p.display_name))),
+            tile(new Set(list.map(m => m.played_on)).size, 'Spieltage')
+        ].join('');
+    }
+    /* Kontomenü: am Handy Teil der Profil-Seite, sonst Pop-up am Profilbild oben rechts */
+    function placeMenu(onPage) {
+        const menu = $('meMenu');
+        if (onPage) { if (menu.parentElement !== $('profHost')) $('profHost').prepend(menu); paintSync(); show(menu, true); }
+        else if (menu.parentElement !== $('meWrap')) { $('meWrap').append(menu); show(menu, false); }
+    }
 
     function setLoggedIn(on) {
         show($('mainNav'), on); show($('addBtn'), on && !D.offline); show($('meBtn'), on);
         show($('offlineHint'), on && D.offline); show($('headSub'), on);
+        show($('tabBar'), on); show($('barAdd'), on && !D.offline);
+        document.body.classList.toggle('has-bar', on);
     }
 
     async function boot() {
@@ -628,6 +704,7 @@
         const myN = D.me.display_name || D.me.email || '';
         let h = 0; for (const c of myN) h = (h * 31 + c.codePointAt(0)) >>> 0;
         $('menuAva').innerHTML = avaHtml(myN, D.me.avatar_path, AVATAR_COLORS[h % AVATAR_COLORS.length]);
+        $('barAva').innerHTML = $('menuAva').innerHTML;
         document.querySelectorAll('[data-ava]').forEach(el => {
             const p = player(el.dataset.ava), i = pIdx(el.dataset.ava);
             el.innerHTML = avaHtml(p && p.display_name, p && p.avatar_path, `var(--${i ? 'ines' : 'stefan'})`);
@@ -641,6 +718,7 @@
     }
     function setLoggedInOff() {
         show($('mainNav'), false); show($('addBtn'), false); show($('meBtn'), false); show($('menuAdmin'), false); show($('offlineHint'), false); show($('headSub'), false);
+        show($('tabBar'), false); document.body.classList.remove('has-bar', 'adding'); formHome(); placeMenu(false);
         $('meBtn').classList.remove('has-photo'); $('meBtn').innerHTML = ic('person');
         onlyView('viewLoggedOut');
     }
@@ -687,9 +765,10 @@
         paintSync(); show(menu, true); $('meBtn').setAttribute('aria-expanded', true);
         const first = menu.querySelector('.pm-item:not([hidden])'); if (first) first.focus();
     };
-    menu.addEventListener('click', e => { if (e.target.closest('.pm-item')) closeMenu(); });
-    document.addEventListener('click', e => { if (!menu.hidden && !menu.contains(e.target)) closeMenu(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) { closeMenu(); $('meBtn').focus(); } });
+    const menuOnPage = () => menu.parentElement === $('profHost');
+    menu.addEventListener('click', e => { if (e.target.closest('.pm-item') && !menuOnPage()) closeMenu(); });
+    document.addEventListener('click', e => { if (!menu.hidden && !menuOnPage() && !menu.contains(e.target)) closeMenu(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden && !menuOnPage()) { closeMenu(); $('meBtn').focus(); } });
     $('logoutBtn').onclick = async () => { show(menu, false); await MB.signOut(); D = null; setLoggedInOff(); };
 
     boot();
