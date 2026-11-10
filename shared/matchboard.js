@@ -16,6 +16,8 @@
     function clearCache() {
         try { Object.keys(localStorage).filter(k => k.startsWith(CACHE)).forEach(k => localStorage.removeItem(k)); } catch (e) {}
     }
+    /* Netzanfragen nicht ewig warten lassen (schlechtes Netz, App kommt aus dem Hintergrund) */
+    const withTimeout = (p, ms) => Promise.race([p, new Promise((_, j) => setTimeout(() => j(new Error('timeout')), ms))]);
     const isNetErr = e => !navigator.onLine || /fetch|network|load failed|timeout/i.test(String(e && (e.message || e)));
     const check = ({ data, error }) => { if (error) throw error; return data; };
     const needSb = () => { if (!sb) throw new Error('Supabase ist noch nicht eingerichtet (shared/config.js).'); };
@@ -33,19 +35,21 @@
 
     /* Kompletter Stand: { players, categories, locations, matches, me: { id, email, role }, offline } */
     async function loadAll() {
-        const session = await getSession();
+        if (configured && !sb) throw new Error('Die Verbindungs-Bibliothek konnte nicht geladen werden (network).');
+        if (!sb) return null;
+        const session = (await withTimeout(sb.auth.getSession(), 8000)).data.session;   /* Zeitlimit → Fehler, nicht „abgemeldet“ */
         if (!session) return null;
         const key = 'all_' + session.user.id;
         try {
-            const role = check(await sb.rpc('overall_app_role', { p_app: APP }));
+            const role = check(await withTimeout(sb.rpc('overall_app_role', { p_app: APP }), 12000));
             if (!role || role === 'guest') throw new Error(NO_ACCESS);
-            const [players, categories, locations, matches] = await Promise.all([
+            const [players, categories, locations, matches] = await withTimeout(Promise.all([
                 sb.rpc('matchboard_players').then(check),
                 sb.from('matchboard_categories').select('*').order('sort').then(check),
                 sb.from('matchboard_locations').select('id, name, region, lat, lng').order('name').then(check),
                 sb.from('matchboard_matches').select(MATCH).order('played_on', { ascending: false }).order('created_at', { ascending: false }).then(check)
-            ]);
-            const own = check(await sb.from('overall_profiles').select('display_name, avatar_path').eq('id', session.user.id).maybeSingle()) || {};
+            ]), 12000);
+            const own = check(await withTimeout(sb.from('overall_profiles').select('display_name, avatar_path').eq('id', session.user.id).maybeSingle(), 12000)) || {};
             const all = { players, categories, locations, matches,
                 me: { id: session.user.id, email: session.user.email, role, display_name: own.display_name, avatar_path: own.avatar_path } };
             cacheSet(key, all);
@@ -163,6 +167,6 @@
     }
 
     window.MB = { sb, configured, today, getSession, loadAll, saveMatch, deleteMatch, addLocation, signIn, signOut,
-        resetPassword, updatePassword, errorText, clearCache, avatarUrls,
+        resetPassword, updatePassword, errorText, clearCache, avatarUrls, isNetErr,
         onAuth: cb => sb && sb.auth.onAuthStateChange((ev, session) => cb(ev, session)) };
 })();

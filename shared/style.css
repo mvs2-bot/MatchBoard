@@ -312,3 +312,9 @@ legend { font-size: 12px; font-weight: 500; color: var(--mute); margin-bottom: 5
 }
 .prof .box { margin-bottom: 0; }
 #viewKarte #map { height: max(320px, calc(100dvh - 300px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))); }
+
+/* Start: Ladeanzeige, bis Anmeldung oder App bereit ist */
+.load-box { max-width: 400px; margin: 12vh auto 0; text-align: center; }
+.load-box .note { margin: 14px 0 16px; }
+.spinner { width: 28px; height: 28px; margin: 0 auto; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--p1); animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
