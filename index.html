@@ -15,7 +15,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="MatchBoard">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
     <script src="shared/config.js"></script>
     <script src="shared/matchboard.js"></script>
@@ -102,6 +102,13 @@
         </div>
         <button class="tab-add" id="addBtn" type="button" hidden><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Match</button>
     </nav>
+
+    <!-- Start: sichtbar, bis Anmeldung oder App bereit ist -->
+    <section id="viewLoad" class="load-box" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <p id="loadMsg" class="note">MatchBoard wird geladen …</p>
+        <button id="loadRetry" class="btn" type="button" hidden>Neu laden</button>
+    </section>
 
     <!-- Nicht angemeldet: nur die Anmeldung, keine Inhalte -->
     <section id="viewLoggedOut" hidden>
@@ -376,7 +383,11 @@
     const osmDe = () => L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png',
         { maxZoom: 18, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende' });
     function renderMap() {
-        if (!window.L) { $('map').innerHTML = '<div class="empty">Karte konnte nicht geladen werden.</div>'; return; }
+        if (!window.L) {
+            /* Leaflet lädt verzögert (defer); fehlt es noch, nach dem Laden der Seite erneut zeichnen */
+            if (document.readyState !== 'complete') { window.addEventListener('load', () => { if (D) renderMap(); }, { once: true }); return; }
+            $('map').innerHTML = '<div class="empty">Karte konnte nicht geladen werden.</div>'; return;
+        }
         if (!map) {
             map = L.map('map', { scrollWheelZoom: false, layers: [osmDe()] });
             map.setView([47.1, 9], 7);
@@ -564,7 +575,7 @@
     $('lGeo').onclick = () => {
         if (!navigator.geolocation) { $('lCoords').textContent = 'Standort wird von diesem Gerät nicht unterstützt.'; return; }
         $('lCoords').textContent = 'Standort wird ermittelt …';
-        navigator.geolocation.getCurrentPosition(p => { setPick(p.coords.latitude, p.coords.longitude); pickMap.setView([p.coords.latitude, p.coords.longitude], 14); },
+        navigator.geolocation.getCurrentPosition(p => { if (!pickMap) return; setPick(p.coords.latitude, p.coords.longitude); pickMap.setView([p.coords.latitude, p.coords.longitude], 14); },
             () => { $('lCoords').textContent = 'Standort nicht verfügbar. Bitte auf die Karte tippen.'; }, { enableHighAccuracy: true, timeout: 10000 });
     };
 
@@ -613,7 +624,20 @@
 
     /* ───────── Bereiche & Anmeldung ───────── */
     const VIEWS = ['viewLoggedOut', 'viewRecovery', 'viewDashboard', 'viewLog', 'viewNew', 'viewKarte', 'viewProfil'];
-    function onlyView(id) { VIEWS.forEach(v => show($(v), v === id)); }
+    function onlyView(id) { clearTimeout(bootTimer); show($('viewLoad'), false); VIEWS.forEach(v => show($(v), v === id)); }
+
+    /* Start-Wächter: dauert der Start länger als 8 s, Hinweis zeigen; klappt er gar nicht, „Neu laden“ anbieten */
+    function stuck(text) {
+        clearTimeout(bootTimer);
+        VIEWS.forEach(v => show($(v), false)); show($('viewLoad'), true);
+        $('loadMsg').textContent = text || 'MatchBoard startet gerade nicht. Bitte neu laden.';
+        show($('loadRetry'), true);
+    }
+    let bootTimer = setTimeout(() => {
+        $('loadMsg').textContent = 'Das dauert gerade länger als sonst …';
+        bootTimer = setTimeout(() => stuck(), 17000);   /* Zeitlimits in matchboard.js: Sitzung 8 s + Daten 12 s */
+    }, 8000);
+    $('loadRetry').onclick = () => location.reload();
     const MQ = matchMedia('(max-width: 767.98px)');
     const isMobile = () => MQ.matches;
     let formInPage = false, lastTab = 'dashboard';
@@ -677,6 +701,7 @@
             D = await MB.loadAll();
         } catch (e) {
             D = null;
+            if (MB.isNetErr(e)) { stuck(MB.errorText(e) + ' Bitte neu laden.'); return; }
             onlyView('viewLoggedOut');
             msg($('loginMsg'), MB.errorText(e));
             show($('meBtn'), !!(await MB.getSession()));
@@ -779,9 +804,19 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden && !menuOnPage()) { closeMenu(); $('meBtn').focus(); } });
     $('logoutBtn').onclick = async () => { show(menu, false); await MB.signOut(); D = null; setLoggedInOff(); };
 
+    window.mbReady = true;
     boot();
     if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 })();
+</script>
+<script>
+/* Falls das Hauptskript gar nicht lief (z. B. Bibliothek nicht geladen): nach 8 s „Neu laden“ anbieten */
+setTimeout(() => {
+    const l = document.getElementById('viewLoad');
+    if (window.mbReady || !l || l.hidden) return;
+    document.getElementById('loadMsg').textContent = 'MatchBoard startet gerade nicht. Bitte neu laden.';
+    const b = document.getElementById('loadRetry'); b.hidden = false; b.onclick = () => location.reload();
+}, 8000);
 </script>
 </body>
 </html>
